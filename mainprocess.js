@@ -21,6 +21,7 @@ const rl = readline.createInterface({
 
 
 async function versioncheck() {
+    console.clear()
     let data = ''
     https.get('https://squawksquad.net/forgedytversion.txt', (response) => {
 
@@ -46,7 +47,6 @@ async function versioncheck() {
 
 
 async function banner(banner) {
-    console.clear
     console.log('\n')
     console.log(chalk.red('     ███████╗ ██████╗ ██████╗  ██████╗ ███████╗██╗   ██╗████████╗'))
     console.log(chalk.red('     ██╔════╝██╔═══██╗██╔══██╗██╔════╝ ██╔════╝╚██╗ ██╔╝╚══██╔══╝'))
