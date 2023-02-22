@@ -7,7 +7,7 @@ import { dirname } from 'path';
 import fetch from 'node-fetch';
 import https from 'https';
 
-const currentversion = '1.5.0'
+const currentversion = '1.6.0'
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename)
 const prompt = (query) => new Promise((resolve) => rl.question(query, resolve));
@@ -46,6 +46,7 @@ async function versioncheck() {
 
 
 async function banner(banner) {
+    console.clear
     console.log('\n')
     console.log(chalk.red('     ███████╗ ██████╗ ██████╗  ██████╗ ███████╗██╗   ██╗████████╗'))
     console.log(chalk.red('     ██╔════╝██╔═══██╗██╔══██╗██╔════╝ ██╔════╝╚██╗ ██╔╝╚══██╔══╝'))
