@@ -2,6 +2,7 @@
 #==========  File Imports  ===========
 
 from customtkinter import CTkScrollableFrame, NORMAL, CTk, CTkToplevel, CTkComboBox, CTkSegmentedButton, CTkEntry, CTkProgressBar, CTkImage, END, CTkLabel, CTkButton, CTkFrame, set_appearance_mode, CTkTextbox, WORD, DISABLED
+from PIL import Image
 
 def load_modules():
     global sys, YoutubeDL, urlparse, Thread, Event, load, JSONDecodeError, dump, Queue, Empty, filedialog, StringVar, pygfont, run, Image, path, getenv, makedirs
@@ -14,40 +15,39 @@ def load_modules():
     from tkinter import filedialog, StringVar
     from pyglet import font as pygfont
     from subprocess import run
-    from PIL import Image
     from os import path, getenv, makedirs
-load_modules()
 #============ General Configs ============
+def globals():
+    global appdata_path, currentversion, prompt, config_folder, config_file, DEFAULT_SETTINGS, load_config, config_data, download_path, windowTheme
+    appdata_path = getenv('APPDATA')
+    currentversion = '2.0'
+    prompt = input
+    config_folder = path.join(appdata_path, 'ForgeYT')
+    config_file = path.join(config_folder, 'config.json')
+    if not path.exists(config_folder):
+        makedirs(config_folder)
 
-appdata_path = getenv('APPDATA')
-currentversion = '2.0'
-prompt = input
-config_folder = path.join(appdata_path, 'ForgeYT')
-config_file = path.join(config_folder, 'config.json')
-if not path.exists(config_folder):
-    makedirs(config_folder)
+    DEFAULT_SETTINGS = {
+        "theme": "system",
+        "download_path": "./video_downloads"
+    }
 
-DEFAULT_SETTINGS = {
-    "theme": "system",
-    "download_path": "./video_downloads"
-}
-
-def load_config():
-    if not path.exists(config_file):
-        return DEFAULT_SETTINGS
-
-    with open(config_file, 'r') as f:
-        try:
-            return load(f)
-        except JSONDecodeError:
-            # If there's an error, return a default configuration
+    def load_config():
+        if not path.exists(config_file):
             return DEFAULT_SETTINGS
 
+        with open(config_file, 'r') as f:
+            try:
+                return load(f)
+            except JSONDecodeError:
+                # If there's an error, return a default configuration
+                return DEFAULT_SETTINGS
 
 
-config_data = load_config()
-download_path = config_data["download_path"]
-windowTheme = config_data["theme"]
+
+    config_data = load_config()
+    download_path = config_data["download_path"]
+    windowTheme = config_data["theme"]
 #============ General Configs ============
 
 #===========  Check Version  ============
@@ -140,7 +140,7 @@ def download(yturl, ftype, app_queue, stop_event, self):
             app_queue.put(("update_console", "ForgeYT made by ForgedCore8, 2023, SquawkSquad"))
             fixedpath = path.normpath(convert_to_absolute(download_path))
             run(['explorer', fixedpath])
-
+            
         except Exception as e:
             app_queue.put(("update_console", f"Error during processing: {str(e)}"))
             app.show_custom_messagebox("Error", f"Error during processing: {str(e)}")
@@ -206,6 +206,8 @@ class App(CTkFrame):
         pass      
 
     def __init__(self, root):
+        load_modules()
+        globals()
         super().__init__(root)
         set_appearance_mode(windowTheme)
         self.canvas_img = None
@@ -220,7 +222,7 @@ class App(CTkFrame):
         self.original_stdout = sys.stdout
         self.font_color = ("black", "white")
         self.background_color1 = ('#fafefe','#04251e')
-        self.background_color2 = ('#bef8ec', '#031b16')
+        self.background_color2 = ('#f3d3da', '#031b16')
         self.buttoncolor = ('#d21941','#c83232')
         self.buttoncolor_hover = ('#841029','#970222')
         self.output_buffer = ""
@@ -335,13 +337,11 @@ class App(CTkFrame):
         self.profile_entry.delete(0, END)
         self.dropdown_menu.set("MP3")
 
-        # If we are in the home page and the download thread is not alive, show the start button
-        if self.current_page == "home" and not self.download_thread.is_alive():
+        # Check if start_button is currently displayed (gridded)
+        if self.current_page == "home" and not self.start_button.grid_info():
             self.start_button.grid(pady=40)
+
         self.stop_event.clear()
-
-
-
 
     def check_queue(self):
         try:
@@ -682,6 +682,6 @@ class App(CTkFrame):
         if len(value) > 40:
             self.entry_var.set(value[:40])
 
-root = CTk(fg_color=('#bef8ec', '#031b16'))
+root = CTk(fg_color=('#f3d3da', '#031b16'))
 app = App(root)
 root.mainloop()
