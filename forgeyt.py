@@ -1,18 +1,24 @@
 
 #==========  File Imports  ===========
-from os import path, getenv, makedirs
-from sys import stdout as sysstdout
-from yt_dlp import YoutubeDL 
-from urllib.parse import urlparse
+
 from customtkinter import CTkScrollableFrame, NORMAL, CTk, CTkToplevel, CTkComboBox, CTkSegmentedButton, CTkEntry, CTkProgressBar, CTkImage, END, CTkLabel, CTkButton, CTkFrame, set_appearance_mode, CTkTextbox, WORD, DISABLED
-from threading import Thread, Event
-from json import load, JSONDecodeError, dump
-from queue import Queue, Empty
-from tkinter import filedialog, StringVar
-from pyglet import font as pygfont
-from subprocess import run
-from PIL import Image
+
+def load_modules():
+    global sys, YoutubeDL, urlparse, Thread, Event, load, JSONDecodeError, dump, Queue, Empty, filedialog, StringVar, pygfont, run, Image, path, getenv, makedirs
+    import sys
+    from yt_dlp import YoutubeDL 
+    from urllib.parse import urlparse
+    from threading import Thread, Event
+    from json import load, JSONDecodeError, dump
+    from queue import Queue, Empty
+    from tkinter import filedialog, StringVar
+    from pyglet import font as pygfont
+    from subprocess import run
+    from PIL import Image
+    from os import path, getenv, makedirs
+load_modules()
 #============ General Configs ============
+
 appdata_path = getenv('APPDATA')
 currentversion = '2.0'
 prompt = input
@@ -98,10 +104,10 @@ filetypes = {
 }
 
 def download(yturl, ftype, app_queue, stop_event, self): 
-    def convert_to_absolute(path):
-        if path.startswith(("./", "../")):
-            return path.abspath(path)
-        return path
+    def convert_to_absolute(p):
+        if p.startswith(("./", "../")):
+            return path.abspath(p)
+        return p
     config_data = load_config()
     download_path = config_data["download_path"]
    
@@ -132,7 +138,8 @@ def download(yturl, ftype, app_queue, stop_event, self):
         try:
             ydl.download([yturl])
             app_queue.put(("update_console", "ForgeYT made by ForgedCore8, 2023, SquawkSquad"))
-            run(['explorer', convert_to_absolute(download_path)])
+            fixedpath = path.normpath(convert_to_absolute(download_path))
+            run(['explorer', fixedpath])
 
         except Exception as e:
             app_queue.put(("update_console", f"Error during processing: {str(e)}"))
@@ -205,12 +212,12 @@ class App(CTkFrame):
         icon_path = resource_path('ForgeYT.ico')
         root.iconbitmap(default=icon_path)
         self.current_page = "none"
-        sysstdout = self
+        sys.stdout = self
         self.root = root
         self.root.geometry("600x450")
         self.root.resizable(False, False)
         self.root.title("ForgeYT")
-        self.original_stdout = sysstdout
+        self.original_stdout = sys.stdout
         self.font_color = ("black", "white")
         self.background_color1 = ('#fafefe','#04251e')
         self.background_color2 = ('#bef8ec', '#031b16')
@@ -222,7 +229,7 @@ class App(CTkFrame):
             base_name = font_path.split('/')[-1]
             font_name = base_name.rsplit('.', 1)[0]
             return font_name
-        self.font_path = resource_path('./LeagueSpartan-Bold.otf')
+        self.font_path = resource_path('./LeagueSpartan-Bold.ttf')
         self.font_name =  register_font(self.font_path)
         self.left_frame = CTkFrame(self.root, fg_color=self.background_color2)
         self.left_frame.grid(row=0, column=0, sticky='nsew')
@@ -503,11 +510,11 @@ class App(CTkFrame):
             widget.grid_forget()
 
         # Title Label
-        label = CTkLabel(self.right_frame, text="Settings", font=("Arial", 32, "bold"), text_color=self.font_color, justify="center")
+        label = CTkLabel(self.right_frame, text="Settings", font=("self.font_path", 32, "bold"), text_color=self.font_color, justify="center")
         label.grid(row=0, column=0, columnspan=3, pady=10, padx=10, sticky="nsew")
 
         # Download Path Entry
-        download_label = CTkLabel(self.right_frame, text="Download Path:", font=("Arial", 15, "bold"), text_color=self.font_color,)
+        download_label = CTkLabel(self.right_frame, text="Download Path:", font=("self.font_path", 15, "bold"), text_color=self.font_color,)
         download_label.grid(row=1, column=0, padx=(10, 3), pady=10, sticky="w")
 
         self.filepath_entry = CTkEntry(self.right_frame, width=200, height=40)
@@ -520,7 +527,7 @@ class App(CTkFrame):
         # Load the existing download path from the config and set it to the entry
         self.filepath_entry.insert(0, config_data["download_path"])
         # Theme Selection
-        theme_label = CTkLabel(self.right_frame, text="Theme:", font=("Arial", 18), text_color=self.font_color)
+        theme_label = CTkLabel(self.right_frame, text="Theme:", font=("self.font_path", 18), text_color=self.font_color)
         theme_label.grid(row=2, column=0, padx=(10,3) , pady=10, sticky="nsew")
 
         self.theme_var = StringVar(value=config_data["theme"])  # Create a StringVar to hold the theme value
@@ -560,11 +567,11 @@ class App(CTkFrame):
         self.right_frame.grid_columnconfigure(0, weight=1)
 
          # Title
-        self.about_title_label = CTkLabel(self.scrollable_frame, text="About ForgeYT", font=("Arial", 40, "bold"), text_color=self.font_color, bg_color="transparent")
+        self.about_title_label = CTkLabel(self.scrollable_frame, text="About ForgeYT", font=("self.font_path", 40, "bold"), text_color=self.font_color, bg_color="transparent")
         self.about_title_label.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
 
         # Origin
-        self.origin_label = CTkLabel(self.scrollable_frame, text="Origin:", font=("Arial", 18, "bold"), text_color=self.font_color, bg_color="transparent")
+        self.origin_label = CTkLabel(self.scrollable_frame, text="Origin:", font=("self.font_path", 18, "bold"), text_color=self.font_color, bg_color="transparent")
         self.origin_label.grid(row=1, column=0, padx=10, pady=2, sticky="nsew")
         self.origin_content = CTkLabel(self.scrollable_frame, wraplength=350, text=("ForgeYT was born out of the need for a reliable YouTube to MP3 converter. "
                                                                     "With many of the popular YTMP3 websites being blocked at school, and others feeling dubious at best, "
@@ -572,36 +579,36 @@ class App(CTkFrame):
         self.origin_content.grid(row=2, column=0, padx=10, pady=2, sticky="nsew")
 
         # Initial Release
-        self.release_label = CTkLabel(self.scrollable_frame, text="Initial Release:", font=("Arial", 18, "bold"), text_color=self.font_color, bg_color="transparent")
+        self.release_label = CTkLabel(self.scrollable_frame, text="Initial Release:", font=("self.font_path", 18, "bold"), text_color=self.font_color, bg_color="transparent")
         self.release_label.grid(row=3, column=0, padx=10, pady=2, sticky="nsew")
         self.release_content = CTkLabel(self.scrollable_frame, wraplength=350, text=("The first iteration of ForgeYT was launched in February 2023. Beginning its journey as a Node.js CLI tool, it has undergone significant evolution to become the Python GUI application you see today."), text_color=self.font_color, bg_color="transparent")
         self.release_content.grid(row=4, column=0, padx=10, pady=2, sticky="nsew")
 
         # Challenges
-        self.challenges_label = CTkLabel(self.scrollable_frame, text="Challenges:", font=("Arial", 18, "bold"), text_color=self.font_color, bg_color="transparent")
+        self.challenges_label = CTkLabel(self.scrollable_frame, text="Challenges:", font=("self.font_path", 18, "bold"), text_color=self.font_color, bg_color="transparent")
         self.challenges_label.grid(row=5, column=0, padx=10, pady=2, sticky="nsew")
         self.challenges_content = CTkLabel(self.scrollable_frame, wraplength=350, text=("Transitioning from Node.js to Python was no small feat. Integrating `yt-dlp` with Node.js's child-process presented unique challenges, but determination and innovation prevailed."), text_color=self.font_color, bg_color="transparent")
         self.challenges_content.grid(row=6, column=0, padx=10, pady=2, sticky="nsew")
 
         # Purpose & Usage
-        self.purpose_label = CTkLabel(self.scrollable_frame, text="Purpose & Usage:", font=("Arial", 18, "bold"), text_color=self.font_color, bg_color="transparent")
+        self.purpose_label = CTkLabel(self.scrollable_frame, text="Purpose & Usage:", font=("self.font_path", 18, "bold"), text_color=self.font_color, bg_color="transparent")
         self.purpose_label.grid(row=7, column=0, padx=10, pady=2, sticky="nsew")
         self.purpose_content = CTkLabel(self.scrollable_frame, wraplength=350, text=("While ForgeYT was originally designed for use within a school environment, its versatility makes it apt for varied situations. Convert YouTube videos to audio with ease, regardless of where you are."), text_color=self.font_color, bg_color="transparent")
         self.purpose_content.grid(row=8, column=0, padx=10, pady=2, sticky="nsew")
 
         # acknowledgemnts
-        self.ack_label = CTkLabel(self.scrollable_frame, text="Acknowledgments:", font=("Arial", 18, "bold"), text_color=self.font_color, bg_color="transparent")
+        self.ack_label = CTkLabel(self.scrollable_frame, text="Acknowledgments:", font=("self.font_path", 18, "bold"), text_color=self.font_color, bg_color="transparent")
         self.ack_label.grid(row=9, column=0, padx=10, pady=2, sticky="nsew")
         self.ack_content = CTkLabel(self.scrollable_frame, wraplength=350, text=("A heartfelt thank you to Mr. Z and DJ Stomp for their invaluable contributions. Additionally, a shout-out to the Python Discord community for their support."), text_color=self.font_color, bg_color="transparent")
         self.ack_content.grid(row=10, column=0, padx=10, pady=2, sticky="nsew")
         
         # Future
-        self.ack_label = CTkLabel(self.scrollable_frame, text="Future:", font=("Arial", 18, "bold"), text_color=self.font_color, bg_color="transparent")
+        self.ack_label = CTkLabel(self.scrollable_frame, text="Future:", font=("self.font_path", 18, "bold"), text_color=self.font_color, bg_color="transparent")
         self.ack_label.grid(row=11, column=0, padx=10, pady=2, sticky="nsew")
         self.ack_content = CTkLabel(self.scrollable_frame, wraplength=350, text=("ForgeYT stands proud at version 2.0. While this is likely its final form, the journey and impact it has had remain invaluable."), text_color=self.font_color, bg_color="transparent")
         self.ack_content.grid(row=12, column=0, padx=10, pady=2, sticky="nsew")
 
-        self.version_label = CTkLabel(self.scrollable_frame, text=f"Current Version: {currentversion}",text_color=self.font_color, bg_color="transparent", font=("Arial", 10, "italic"))
+        self.version_label = CTkLabel(self.scrollable_frame, text=f"Current Version: {currentversion}",text_color=self.font_color, bg_color="transparent", font=("self.font_path", 10, "italic"))
         self.version_label.grid(row=13, column=0, padx=10, pady=10, sticky="nsew")
 
     def insert_text_in_chunks(self, widget, text, chunk_size=50000):
