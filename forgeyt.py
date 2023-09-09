@@ -396,8 +396,6 @@ class App(CTkFrame):
         self.profile_entry.grid(row=2, column=0, pady=(5, 5), padx=60, sticky="ew")
         self.profile_entry.grid_forget()  # Initially hide it if the home is not the default screen
         print("showing home")
-        self.original_stdout = sys.stdout
-        sys.stdout = self
         def close_console():
                 windll.user32.ShowWindow(windll.kernel32.GetConsoleWindow(), 0)
         if getattr(sys, 'frozen', False):
@@ -409,7 +407,8 @@ class App(CTkFrame):
         else:
             self.show_home()
         self.after_id = None
-
+        self.original_stdout = sys.stdout
+        sys.stdout = self
 
     def close_app(self):
         # Signal all threads to stop
