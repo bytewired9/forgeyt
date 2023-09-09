@@ -1,5 +1,6 @@
 # ==========  File Imports  ===========
 
+print("importing customtkinter")
 from customtkinter import (
     CTkScrollableFrame,
     NORMAL,
@@ -18,11 +19,14 @@ from customtkinter import (
     WORD,
     DISABLED,
 )
+print("importing pillow")
 from PIL import Image
-
+from platform import version
+from ctypes import windll
+from webbrowser import open as webopen
 
 def load_modules():
-    global sys, YoutubeDL, urlparse, Thread, Event, load, JSONDecodeError, dump, Queue, Empty, filedialog, StringVar, pygfont, run, path, getenv, makedirs
+    global requests, sys, remove, YoutubeDL, urlparse, Thread, Event, load, JSONDecodeError, dump, Queue, Empty, filedialog, StringVar, pygfont, run, path, getenv, makedirs, pyi_splash
     import sys
     from yt_dlp import YoutubeDL
     from urllib.parse import urlparse
@@ -32,8 +36,8 @@ def load_modules():
     from tkinter import filedialog, StringVar
     from pyglet import font as pygfont
     from subprocess import run
-    from os import path, getenv, makedirs
-
+    from os import path, getenv, makedirs, remove
+    import requests
 
 # ============ General Configs ============
 def globals():
@@ -88,18 +92,19 @@ def globals():
 #          doPrompts()
 #
 # ===========  Check Version  ============
+
+
 try:
     from sys import _MEIPASS
 except ImportError:
     _MEIPASS = None
-
 
 def resource_path(relative_path):
     """Get absolute path to resource, works for dev and for PyInstaller"""
     base_path = _MEIPASS if _MEIPASS is not None else path.abspath(".")
     return path.join(base_path, relative_path)
 
-
+print("defining filetypes")
 filetypes = {
     "mp3": {"filetype": "mp3", "fileext": "mp3", "audio": True},
     "mp4": {"filetype": "mp4", "fileext": "mp4", "audio": False},
@@ -117,7 +122,7 @@ filetypes = {
     "m4a": {"filetype": "m4a", "fileext": "m4a", "audio": True},
     "mka": {"filetype": "mka", "fileext": "mka", "audio": True},
     "opus": {"filetype": "opus", "fileext": "opus", "audio": True},
-    "wav": {"filetype": "wav", "fileext": "wav", "audio": True},
+    "wav": {"filetype": "wav", "fileext": "wav", "audio": True}
 }
 
 
@@ -237,24 +242,21 @@ class CustomMessageBox:
         CustomMessageBox._instance = None  # Clear the class variable
         self.top.destroy()
 
-
+def is_windows_11():
+    # Extract build number from the platform version
+    build_number = int(version().split('.')[-1])
+    return build_number >= 22000
 class App(CTkFrame):
+    print("app class started")
     def flush(self):
         pass
+
 
     def __init__(self, root):
         print("initializing...")
         super().__init__(root)
         self.root = root
-        self.canvas_img = None
-        print("setting geometry")
-        self.root.geometry("600x450")
-        print("setting resizability")
-        self.root.resizable(False, False)
-        print("setting title")
-        self.root.title("ForgeYT")
-        print("setting current_page")
-        self.current_page = "none"
+        print("getting DPI")
         print("setting font color")
         self.font_color = ("black", "white")
         print("setting colors")
@@ -262,22 +264,48 @@ class App(CTkFrame):
         self.background_color2 = ("#f3d3da", "#031b16")
         self.buttoncolor = ("#d21941", "#c83232")
         self.buttoncolor_hover = ("#841029", "#970222")
+        def get_system_dpi():
+            hdc = windll.user32.GetDC(0)
+            dpi = windll.gdi32.GetDeviceCaps(hdc, 88)  # 88 is LOGPIXELSX
+            windll.user32.ReleaseDC(0, hdc)
+            return dpi / 96  # The base value is 96 DPI which is 100% scaling
+        def get_scaling_factor(dpi_scaling):
+            if dpi_scaling <= 1.0:  # 100% scaling or less
+                return 0.8
+            elif dpi_scaling <= 1.25:  # 125% scaling
+                return 1.0
+            elif dpi_scaling <= 1.5:  # 150% scaling
+                return 1.2
+            else:  # 175% scaling or more
+                return 1.4
+        dpi_scaling = get_system_dpi()
+        scaling_factor = get_scaling_factor(dpi_scaling)
+        print(f"Chosen Scaling Factor: {scaling_factor}")  # Debug statement
+        print("setting geometry")
+        self.root.minsize(600, 450)
+
+        self.root.grid_columnconfigure(
+            0, minsize=100*scaling_factor
+        )  # First column fixed at 100 pixels
+        self.root.grid_columnconfigure(
+            1, minsize=550*scaling_factor
+        )  # Second column fixed at 500 pixels
+        self.root.grid_rowconfigure(0, weight=1)  # Makes the row 0 expand vertically
+        # Adjust settings for Windows 11
         print("setting left_frame")
         self.left_frame = CTkFrame(self.root, fg_color=self.background_color2)
         self.left_frame.grid(row=0, column=0, sticky="nsew")
         print("setting right frame")
         self.right_frame = CTkFrame(root, fg_color=self.background_color1)
         self.right_frame.grid(
-            row=0, column=1, rowspan=4, sticky="nsew", padx=10, pady=10
-        )
-        print("setting root grid")
-        self.root.grid_rowconfigure(0, weight=1)  # Makes the row 0 expand vertically
-        self.root.grid_columnconfigure(
-            0, minsize=100
-        )  # First column fixed at 100 pixels
-        self.root.grid_columnconfigure(
-            1, minsize=550
-        )  # Second column fixed at 500 pixels
+            row=0, column=1, rowspan=4, sticky="nsew", padx=10, pady=10)
+        self.canvas_img = None
+        print("setting resizability")
+        self.root.resizable(False, False)
+        print("setting title")
+        self.root.title("ForgeYT")
+        print("setting current_page")
+        self.current_page = "none"
         print("setting download_thread")
         self.download_thread = None  # To keep track of download thread
         print("setting url_of_the_profile_page")
@@ -294,12 +322,10 @@ class App(CTkFrame):
         globals()
         print("setting appearance mode")
         set_appearance_mode(windowTheme)
-        print("setting icon path")
-        icon_path = resource_path("ForgeYT.ico")
-        root.iconbitmap(default=icon_path)
         
         print("setting output buffer")
         self.output_buffer = ""
+
 
         def register_font(font_path):
             pygfont.add_file(font_path)
@@ -334,7 +360,7 @@ class App(CTkFrame):
         self.start_image = CTkImage(
             light_image=Image.open(resource_path("download.png")),
             dark_image=Image.open(resource_path("download_dark.png")),
-            size=(40, 40),
+            size=(30, 30),
         )
         self.start_button = CTkButton(
             self.right_frame,
@@ -346,7 +372,7 @@ class App(CTkFrame):
             height=50,
             width=120,
         )
-        self.start_button.grid(pady=40)
+        self.start_button.grid(pady=(30,0))
         self.start_button.grid_forget()
         print("setting stop event")
         self.stop_event = Event()
@@ -372,7 +398,16 @@ class App(CTkFrame):
         print("showing home")
         self.original_stdout = sys.stdout
         sys.stdout = self
-        self.show_home()
+        def close_console():
+                windll.user32.ShowWindow(windll.kernel32.GetConsoleWindow(), 0)
+        if getattr(sys, 'frozen', False):
+            self.show_home()
+            close_console()
+            print("setting icon path")
+            icon_path = resource_path("ForgeYT.ico")
+            self.root.iconbitmap(default=icon_path)
+        else:
+            self.show_home()
         self.after_id = None
 
 
@@ -413,7 +448,7 @@ class App(CTkFrame):
 
         # Hide the start button and show the loading label
         self.start_button.grid_forget()
-        self.loading_label.grid(pady=40)
+        self.loading_label.grid(pady=(40,0))
 
     def cleanup_after_thread(self):
 
@@ -424,7 +459,7 @@ class App(CTkFrame):
 
         # Check if start_button is currently displayed (gridded)
         if self.current_page == "home" and not self.start_button.grid_info():
-            self.start_button.grid(pady=40)
+            self.start_button.grid(pady=(30,0))
 
         self.stop_event.clear()
 
@@ -448,22 +483,22 @@ class App(CTkFrame):
         self.home_image = CTkImage(
             light_image=Image.open(resource_path("Home.png")),
             dark_image=Image.open(resource_path("Home_dark.png")),
-            size=(button_height - 10, button_height - 10),
+            size=(button_height - 20, button_height - 20),
         )
         self.settings_image = CTkImage(
             light_image=Image.open(resource_path("Settings.png")),
             dark_image=Image.open(resource_path("Settings_dark.png")),
-            size=(button_height - 10, button_height - 10),
+            size=(button_height - 20, button_height - 20),
         )
         self.about_image = CTkImage(
             light_image=Image.open(resource_path("About.png")),
             dark_image=Image.open(resource_path("About_dark.png")),
-            size=(button_height - 10, button_height - 10),
+            size=(button_height - 20, button_height - 20),
         )
         self.console_image = CTkImage(
             light_image=Image.open(resource_path("Console.png")),
             dark_image=Image.open(resource_path("Console_dark.png")),
-            size=(button_height - 10, button_height - 10),
+            size=(button_height - 20, button_height - 20),
         )
         self.image_label = CTkLabel(self.left_frame, image=self.forgeyt_image, text="")
         self.image_label.grid(row=0, column=0, sticky="ew", padx=10, pady=(10, 2))
@@ -539,7 +574,26 @@ class App(CTkFrame):
 
                 self.root.after(500, self.root.update_idletasks)
 
+    
+
+    def open_browser(self):
+        webopen("https://github.com/ForgedCore8/forgeyt/releases/latest")
+
+    def get_latest_release(self):
+        url = "https://api.github.com/repos/ForgedCore8/forgeyt/releases/latest"
+        response = requests.get(url)
+        if response.status_code == 200:
+            return response.json().get('tag_name')
+        else:
+            return None
+    def is_newer_version(self, current_version, latest_version):
+        current = [int(x) for x in current_version.split('.')]
+        latest = [int(x) for x in latest_version.split('.')]
+        return latest > current
+
     def show_home(self):
+        
+
         self.current_page = "home"
         # Clear existing widgets
         for widget in self.right_frame.winfo_children():
@@ -598,9 +652,17 @@ class App(CTkFrame):
             row=4, column=0, pady=5, padx=60, sticky="ew"
         )  # Adjust padding and placement accordingly
         if self.download_thread and self.download_thread.is_alive():
-            self.loading_label.grid(row=5, column=0, pady=40)
+            self.loading_label.grid(row=5, column=0, pady=(40,0))
         else:
-            self.start_button.grid(row=5, column=0, pady=40)
+            self.start_button.grid(row=5, column=0, pady=(30,0))
+        latest_version = self.get_latest_release()
+        if latest_version and self.is_newer_version(currentversion, latest_version):
+            self.update_button = CTkButton(
+                self.right_frame,
+                text="New version available!",
+                command=self.open_browser
+            )
+            self.update_button.grid(row=6, column=0, pady=5)  # Adjust the grid position accordingly
 
     def limit_entry_size(self, *args):
         value = self.entry_var.get()
@@ -1008,7 +1070,7 @@ class App(CTkFrame):
         if len(value) > 40:
             self.entry_var.set(value[:40])
 
-
+print("starting app")
 root = CTk(fg_color=("#f3d3da", "#031b16"))
 app = App(root)
 root.mainloop()
