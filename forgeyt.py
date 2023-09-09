@@ -43,7 +43,7 @@ def load_modules():
 def globals():
     global appdata_path, currentversion, prompt, config_folder, config_file, DEFAULT_SETTINGS, load_config, config_data, download_path, windowTheme
     appdata_path = getenv("APPDATA")
-    currentversion = "2.0"
+    currentversion = "2.0.0"
     prompt = input
     config_folder = path.join(appdata_path, "ForgeYT")
     config_file = path.join(config_folder, "config.json")
