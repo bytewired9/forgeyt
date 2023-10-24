@@ -43,7 +43,7 @@ def load_modules():
 def globals():
     global appdata_path, currentversion, prompt, config_folder, config_file, DEFAULT_SETTINGS, load_config, config_data, download_path, windowTheme
     appdata_path = getenv("APPDATA")
-    currentversion = "2.0.0"
+    currentversion = "2.1.0"
     prompt = input
     config_folder = path.join(appdata_path, "ForgeYT")
     config_file = path.join(config_folder, "config.json")
@@ -70,29 +70,35 @@ def globals():
 
 # ============ General Configs ============
 
-# ===========  Check Version  ============
-# def versioncheck():
-#     response = requests.get('https://squawksquad.net/forgedytversion.txt')
-#     data = response.text.strip()
-#
-#     if data != currentversion:
-#         app_queue.put(("update_console", "ForgeYT Has an update! Downloading Latest Version."))
-#
-#         url = 'https://github.com/ForgedCore8/forgeytdeps/releases/latest/download/ForgeYT.exe?raw=true'
-#         response = requests.get(url, stream=True)
-#         with open('ForgeYT.exe', 'wb') as file:
-#             for chunk in response.iter_content(chunk_size=8192):
-#                 file.write(chunk)
-#
-#         app_queue.put(("update_console", 'File downloaded successfully!'))
-#         app_queue.put(("update_console", 'ForgeYT Updated Successfully. Please Reopen ForgeYT!'))
-#         exit()
-#     else:
-#         app_queue.put(("update_console", "Version check: Up to date")
-#          doPrompts()
-#
-# ===========  Check Version  ============
+def add_pwd_to_path():
+    """
+    Appends the current directory of the script to the system's PATH environment variable.
+    This function is OS-agnostic and works on both Windows and POSIX systems.
+    
+    How it works:
+    - Determines the current directory of the script using `os.path.abspath(__file__)`.
+    - Checks the operating system using `os.name` to set the appropriate PATH variable name ('Path' for Windows, 'PATH' for POSIX).
+    - Retrieves the current PATH environment variable.
+    - Appends the current directory to the PATH, using the correct separator (';' for Windows, ':' for POSIX).
+    - Updates the PATH environment variable with the new value.
+    """
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    path_var = 'Path' if os.name == 'nt' else 'PATH'
+    existing_path = os.environ.get(path_var, '')
+    new_path = f"{existing_path};{current_dir}" if os.name == 'nt' else f"{existing_path}:{current_dir}"
+    os.environ[path_var] = new_path
 
+
+def get_path():
+    """
+    Retrieves the system's PATH environment variable in an OS-agnostic manner. 
+    
+    Returns:
+        str: The current PATH environment variable.
+    """
+    return os.getenv("Path" if os.name == "nt" else "PATH")
+
+add_pwd_to_path()
 
 try:
     from sys import _MEIPASS
@@ -325,16 +331,6 @@ class App(CTkFrame):
         
         print("setting output buffer")
         self.output_buffer = ""
-
-
-        def register_font(font_path):
-            pygfont.add_file(font_path)
-            base_name = font_path.split("/")[-1]
-            font_name = base_name.rsplit(".", 1)[0]
-            return font_name
-        print("setting font path")
-        self.font_path = resource_path("./LeagueSpartan-Bold.ttf")
-        self.font_name = register_font(self.font_path)
         print("setting up UI")
         self.setup_ui()
         print("setting up newline pos")
@@ -351,7 +347,7 @@ class App(CTkFrame):
         self.loading_label = CTkLabel(
             self.right_frame,
             text="Processing...",
-            text_color="white",
+            text_color=self.font_color,
             bg_color="transparent",
         )
         self.loading_label.grid(pady=40)
@@ -504,7 +500,7 @@ class App(CTkFrame):
         self.image_label_label = CTkLabel(
             self.left_frame,
             text="ForgeYT",
-            font=(self.font_name, 30, "bold"),
+            font=("Arial", 30, "bold"),
             text_color=self.font_color,
             bg_color="transparent",
         )
@@ -613,7 +609,7 @@ class App(CTkFrame):
         self.scalable_elements["title_label"] = CTkLabel(
             self.right_frame,
             text="ForgeYT",
-            font=(self.font_name, 50, "bold"),
+            font=("Arial", 50, "bold"),
             text_color=self.font_color,
             bg_color="transparent",
         )
@@ -624,7 +620,7 @@ class App(CTkFrame):
         self.scalable_elements["url_label"] = CTkLabel(
             self.right_frame,
             text="Enter Video URL",
-            font=(self.font_name, 20),
+            font=("Arial", 20),
             text_color=self.font_color,
             bg_color="transparent",
         )
@@ -641,7 +637,7 @@ class App(CTkFrame):
         self.dropdown_label = CTkLabel(
             self.right_frame,
             text="Select File Type",
-            font=(self.font_name, 20),
+            font=("Arial", 20),
             text_color=self.font_color,
             bg_color="transparent",
         )
@@ -748,7 +744,7 @@ class App(CTkFrame):
         label = CTkLabel(
             self.right_frame,
             text="Settings",
-            font=("self.font_path", 32, "bold"),
+            font=("Arial", 32, "bold"),
             text_color=self.font_color,
             justify="center",
         )
@@ -758,7 +754,7 @@ class App(CTkFrame):
         download_label = CTkLabel(
             self.right_frame,
             text="Download Path:",
-            font=("self.font_path", 15, "bold"),
+            font=("Arial", 15, "bold"),
             text_color=self.font_color,
         )
         download_label.grid(row=1, column=0, padx=(10, 3), pady=10, sticky="w")
@@ -783,7 +779,7 @@ class App(CTkFrame):
         theme_label = CTkLabel(
             self.right_frame,
             text="Theme:",
-            font=("self.font_path", 18),
+            font=("Arial", 18),
             text_color=self.font_color,
         )
         theme_label.grid(row=2, column=0, padx=(10, 3), pady=10, sticky="nsew")
@@ -851,7 +847,7 @@ class App(CTkFrame):
         self.about_title_label = CTkLabel(
             self.scrollable_frame,
             text="About ForgeYT",
-            font=("self.font_path", 40, "bold"),
+            font=("Arial", 40, "bold"),
             text_color=self.font_color,
             bg_color="transparent",
         )
@@ -861,7 +857,7 @@ class App(CTkFrame):
         self.origin_label = CTkLabel(
             self.scrollable_frame,
             text="Origin:",
-            font=("self.font_path", 18, "bold"),
+            font=("Arial", 18, "bold"),
             text_color=self.font_color,
             bg_color="transparent",
         )
@@ -883,7 +879,7 @@ class App(CTkFrame):
         self.release_label = CTkLabel(
             self.scrollable_frame,
             text="Initial Release:",
-            font=("self.font_path", 18, "bold"),
+            font=("Arial", 18, "bold"),
             text_color=self.font_color,
             bg_color="transparent",
         )
@@ -903,7 +899,7 @@ class App(CTkFrame):
         self.challenges_label = CTkLabel(
             self.scrollable_frame,
             text="Challenges:",
-            font=("self.font_path", 18, "bold"),
+            font=("Arial", 18, "bold"),
             text_color=self.font_color,
             bg_color="transparent",
         )
@@ -923,7 +919,7 @@ class App(CTkFrame):
         self.purpose_label = CTkLabel(
             self.scrollable_frame,
             text="Purpose & Usage:",
-            font=("self.font_path", 18, "bold"),
+            font=("Arial", 18, "bold"),
             text_color=self.font_color,
             bg_color="transparent",
         )
@@ -943,7 +939,7 @@ class App(CTkFrame):
         self.ack_label = CTkLabel(
             self.scrollable_frame,
             text="Acknowledgments:",
-            font=("self.font_path", 18, "bold"),
+            font=("Arial", 18, "bold"),
             text_color=self.font_color,
             bg_color="transparent",
         )
@@ -963,7 +959,7 @@ class App(CTkFrame):
         self.ack_label = CTkLabel(
             self.scrollable_frame,
             text="Future:",
-            font=("self.font_path", 18, "bold"),
+            font=("Arial", 18, "bold"),
             text_color=self.font_color,
             bg_color="transparent",
         )
@@ -984,7 +980,7 @@ class App(CTkFrame):
             text=f"Current Version: {currentversion}",
             text_color=self.font_color,
             bg_color="transparent",
-            font=("self.font_path", 10, "italic"),
+            font=("Arial", 10, "italic"),
         )
         self.version_label.grid(row=13, column=0, padx=10, pady=10, sticky="nsew")
 
