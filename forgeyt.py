@@ -18,7 +18,7 @@ def load_modules():
 # =========  Module Imports  ========== #
 # ===================================== #
 
-add_pwd_to_path()
+add_pwd_to_path(path.dirname(path.abspath(__file__)))
 start_app()
 
 
