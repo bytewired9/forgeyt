@@ -2,7 +2,7 @@ from os import path, getenv, makedirs
 from json import load, JSONDecodeError
 
 appdata_path = getenv("APPDATA")
-currentversion = "2.2.0"
+currentversion = "2.2.1"
 prompt = input
 config_folder = path.join(appdata_path, "ForgeYT")
 config_file = path.join(config_folder, "config.json")

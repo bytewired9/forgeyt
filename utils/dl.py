@@ -32,7 +32,7 @@ def download(yturl, ftype, app_queue, self):
     if audio:
         ydl_opts["format"] = "bestaudio/best"
     else:
-        ydl_opts["format"] = f"bestvideo[ext={fileext}]+bestaudio[ext=m4a]/best"
+        ydl_opts["format"] = f"bestvideo[ext={fileext}][vcodec=avc1]+bestaudio[ext=m4a]/best"
 
     with YoutubeDL(ydl_opts) as ydl:
         try:
