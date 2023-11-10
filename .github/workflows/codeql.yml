@@ -1,0 +1,51 @@
+name: "CodeQL"
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '27 14 * * 3'
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'python' ]
+        os: [ 'ubuntu-20.04', 'ubuntu-22.04', 'macos-11', 'macos-12', 'macos-13', 'windows-2019', 'windows-latest' ]
+        python: [ 3.9.x, 3.10.x, 3.11.x]
+
+    steps:
+    - name: Setup python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python }}
+
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Install Dependencies
+      run: pip install -r requirements.txt
+      
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v2
+      with:
+        languages: ${{ matrix.language }}
+
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v2
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
+      with:
+        category: "/language:${{matrix.language}}"
