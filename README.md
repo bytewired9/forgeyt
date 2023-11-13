@@ -31,7 +31,7 @@ We welcome contributions to `forgeyt`! Here's how you can contribute:
 1. **Fork the Repository**: Click the 'Fork' button at the top right of the page to create your own copy of the repository.
 2. **Clone the Forked Repository**:
    ```bash
-   git clone https://github.com/[your-username]/forgeyt.git
+   git clone https://github.com/ForgedCore8/forgeyt.git
    ```
 3. **Create a New Branch**:
    ```bash
