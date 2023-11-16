@@ -19,20 +19,30 @@ def download(yturl, ftype, app_queue, self):
     filetype = filetypes.get(ftype, default_filetype_data)["filetype"]
     fileext = filetypes.get(ftype, default_filetype_data)["fileext"]
     audio = filetypes.get(ftype, default_filetype_data)["audio"]
-
+    codec = filetypes.get(ftype, default_filetype_data)["codec"]
     app_queue.put(("update_console", f"Youtube URL: {yturl}"))
 
     ydl_opts = {
         "outtmpl": f"{convert_to_absolute(download_path)}\\%(uploader)s - %(title)s.{fileext}",
-        "ignoreerrors": True,
-        "postprocessors": [],
+        "ignoreerrors": False,
         "progress_hooks": [hooker]
     }
+    app_queue.put(("update_console", f"Audio = {audio}"))
+    app_queue.put(("update_console", f"{filetype}"))
+    app_queue.put(("update_console", f"{codec}"))
+    
 
-    if audio:
-        ydl_opts["format"] = "bestaudio/best"
+    if audio == True:
+        app_queue.put(("update_console", "Audio Path Selected"))
+        ydl_opts["format"] = f"bestaudio[acodec={codec}]/best"
+        ydl_opts["postprocessors"] = [{
+        "key": "FFmpegExtractAudio",
+        "preferredcodec": codec,
+        "preferredquality": "192",
+    }]
     else:
-        ydl_opts["format"] = f"bestvideo[ext={fileext}][vcodec=avc1]+bestaudio[ext=m4a]/best"
+        app_queue.put(("update_console", "Video Path Selected"))
+        ydl_opts["format"] = f"bestvideo[ext={fileext}][vcodec={codec}]+bestaudio[ext=m4a]/best"
 
     with YoutubeDL(ydl_opts) as ydl:
         try:
