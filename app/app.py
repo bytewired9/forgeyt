@@ -1,11 +1,9 @@
 from utils import download, windowTheme, currentversion, config_file, DEFAULT_SETTINGS, load_config, resource_path
 from vars import filetypes
 from .messagebox import CustomMessageBox
-
 from customtkinter import (
     CTkScrollableFrame,
     NORMAL,
-    CTk,
     CTkComboBox,
     CTkSegmentedButton,
     CTkEntry,
@@ -17,6 +15,7 @@ from customtkinter import (
     set_appearance_mode,
     CTkTextbox,
     WORD,
+    CTkCheckBox,
     DISABLED,
 )
 from PIL import Image
@@ -24,14 +23,13 @@ from ctypes import windll
 from webbrowser import open as webopen
 from os import path, getenv, makedirs, remove, name, environ, utime
 def load_modules():
-    global requests, sys, remove, urlparse, Thread, Event, load, JSONDecodeError, dump, Queue, Empty, filedialog, StringVar, pygfont, run, path, getenv, makedirs, pyi_splash
+    global requests, sys, remove, urlparse, Thread, Event, load, JSONDecodeError, dump, Queue, Empty, filedialog, StringVar, run, path, getenv, makedirs
     import sys
     from urllib.parse import urlparse
     from threading import Thread, Event
     from json import load, JSONDecodeError, dump
     from queue import Queue, Empty
     from tkinter import filedialog, StringVar
-    from pyglet import font as pygfont
     from subprocess import run
     import requests
 
@@ -113,6 +111,7 @@ class App(CTkFrame):
         
         # print("setting output buffer")
         self.output_buffer = ""
+        self.open_explorer = StringVar(value="True")
         # print("setting up UI")
         self.setup_ui()
         # print("setting up newline pos")
@@ -219,7 +218,7 @@ class App(CTkFrame):
 
         # Start the downloading thread
         self.download_thread = Thread(
-            target=download, args=(url, filetype, self.queue, self)
+            target=download, args=(url, filetype, self.queue, self.open_explorer, self)
         )
         self.download_thread.start()
 
@@ -232,7 +231,7 @@ class App(CTkFrame):
         # Hide the loading_label if it's present
         self.loading_label.grid_forget()
         self.profile_entry.delete(0, END)
-        self.dropdown_menu.set("MP3")
+        self.dropdown_menu.set("MP4")
 
         # Check if start_button is currently displayed (gridded)
         if self.current_page == "home" and not self.start_button.grid_info():
@@ -351,7 +350,6 @@ class App(CTkFrame):
 
                 self.root.after(500, self.root.update_idletasks)
 
-    
 
     def open_browser(self):
         webopen("https://github.com/ForgedCore8/forgeyt/releases/latest")
@@ -424,14 +422,18 @@ class App(CTkFrame):
             bg_color="transparent",
         )
         self.dropdown_label.grid(row=3, column=0, pady=(5, 5), sticky="nsew")
-
         self.dropdown_menu.grid(
             row=4, column=0, pady=5, padx=60, sticky="ew"
         )  # Adjust padding and placement accordingly
+        self.open_explorerbox = CTkCheckBox(self.right_frame, text="Open explorer?",
+                                     variable=self.open_explorer, onvalue="True", offvalue="False")
+        self.open_explorerbox.grid(
+            row=5, column=0, pady=5, padx=60, sticky="ew"
+        )  # Adjust padding and placement accordingly
         if self.download_thread and self.download_thread.is_alive():
-            self.loading_label.grid(row=5, column=0, pady=(40,0))
+            self.loading_label.grid(row=6, column=0, pady=(40,0))
         else:
-            self.start_button.grid(row=5, column=0, pady=(30,0))
+            self.start_button.grid(row=6, column=0, pady=(30,0))
         latest_version = self.get_latest_release()
         if latest_version and self.is_newer_version(currentversion, latest_version):
             self.update_button = CTkButton(
@@ -439,12 +441,7 @@ class App(CTkFrame):
                 text="New version available!",
                 command=self.open_browser
             )
-            self.update_button.grid(row=6, column=0, pady=5)  # Adjust the grid position accordingly
-
-    def limit_entry_size(self, *args):
-        value = self.entry_var.get()
-        if len(value) > 40:
-            self.entry_var.set(value[:40])
+            self.update_button.grid(row=7, column=0, pady=5)  # Adjust the grid position accordingly
 
     def show_settings(self):
         config_data = load_config()
@@ -464,13 +461,15 @@ class App(CTkFrame):
                 dump(DEFAULT_SETTINGS, f, indent=4)
 
             # Update the GUI elements
-            self.filepath_entry.delete(0, END)
-            self.filepath_entry.insert(0, DEFAULT_SETTINGS["download_path"])
-            self.theme_var.set(DEFAULT_SETTINGS["theme"])
+            filepath_entry.delete(0, END)
+            filepath_entry.insert(0, DEFAULT_SETTINGS["download_path"])
+            theme_var.set(DEFAULT_SETTINGS["theme"])
             set_appearance_mode(DEFAULT_SETTINGS["theme"])
 
             # Inform the user
             self.show_custom_messagebox("Success", "Settings reset to default!")
+        def add_to_start():
+            print("hi")
 
         def change_appearance_mode_event(new_appearance_mode: str):
             set_appearance_mode(new_appearance_mode)
@@ -494,8 +493,8 @@ class App(CTkFrame):
         def select_directory():
             selected_dir = filedialog.askdirectory()
             if selected_dir:  # If a directory was selected
-                self.filepath_entry.delete(0, END)
-                self.filepath_entry.insert(0, selected_dir)
+                filepath_entry.delete(0, END)
+                filepath_entry.insert(0, selected_dir)
 
         def save_and_apply_settings(theme_var, filepath_entry):
             # Extract values from the StringVar and Entry
@@ -541,10 +540,10 @@ class App(CTkFrame):
         )
         download_label.grid(row=1, column=0, padx=(10, 3), pady=10, sticky="w")
 
-        self.filepath_entry = CTkEntry(self.right_frame, width=200, height=40)
-        self.filepath_entry.grid(row=1, column=1, padx=(3, 10), pady=10, sticky="w")
+        filepath_entry = CTkEntry(self.right_frame, width=200, height=40)
+        filepath_entry.grid(row=1, column=1, padx=(3, 10), pady=10, sticky="w")
 
-        self.select_folder_button = CTkButton(
+        select_folder_button = CTkButton(
             self.right_frame,
             text="Select",
             command=select_directory,
@@ -553,10 +552,10 @@ class App(CTkFrame):
             fg_color=self.buttoncolor,
             hover_color=self.buttoncolor_hover,
         )
-        self.select_folder_button.grid(row=1, column=2, padx=(3, 10), pady=10)
+        select_folder_button.grid(row=1, column=2, padx=(3, 10), pady=10)
 
         # Load the existing download path from the config and set it to the entry
-        self.filepath_entry.insert(0, config_data["download_path"])
+        filepath_entry.insert(0, config_data["download_path"])
         # Theme Selection
         theme_label = CTkLabel(
             self.right_frame,
@@ -566,19 +565,19 @@ class App(CTkFrame):
         )
         theme_label.grid(row=2, column=0, padx=(10, 3), pady=10, sticky="nsew")
 
-        self.theme_var = StringVar(
+        theme_var = StringVar(
             value=config_data["theme"]
         )  # Create a StringVar to hold the theme value
-        self.theme_selector = CTkSegmentedButton(
+        theme_selector = CTkSegmentedButton(
             self.right_frame,
             values=["system", "light", "dark"],
-            variable=self.theme_var,
+            variable=theme_var,
             width=350,
             height=40,
             selected_color=self.buttoncolor,
             selected_hover_color=self.buttoncolor_hover,
         )
-        self.theme_selector.grid(row=2, column=1, padx=(3, 10), pady=10, sticky="w")
+        theme_selector.grid(row=2, column=1, padx=(3, 10), pady=10, sticky="w")
 
         # Save Button
 
@@ -586,7 +585,7 @@ class App(CTkFrame):
             self.right_frame,
             text="Save",
             command=lambda: save_and_apply_settings(
-                self.theme_var, self.filepath_entry
+                theme_var, filepath_entry
             ),
             fg_color=self.buttoncolor,
             hover_color=self.buttoncolor_hover,
@@ -618,34 +617,34 @@ class App(CTkFrame):
         self.right_frame["padx"] = 20
         self.right_frame["pady"] = 20
         # Set up the Scrollable Frame
-        self.scrollable_frame = CTkScrollableFrame(
+        scrollable_frame = CTkScrollableFrame(
             self.right_frame, corner_radius=0, fg_color="transparent"
         )
-        self.scrollable_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+        scrollable_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
         self.right_frame.grid_rowconfigure(0, weight=1)
         self.right_frame.grid_columnconfigure(0, weight=1)
 
         # Title
-        self.about_title_label = CTkLabel(
-            self.scrollable_frame,
+        about_title_label = CTkLabel(
+            scrollable_frame,
             text="About ForgeYT",
             font=("Arial", 40, "bold"),
             text_color=self.font_color,
             bg_color="transparent",
         )
-        self.about_title_label.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+        about_title_label.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
 
         # Origin
-        self.origin_label = CTkLabel(
-            self.scrollable_frame,
+        origin_label = CTkLabel(
+            scrollable_frame,
             text="Origin:",
             font=("Arial", 18, "bold"),
             text_color=self.font_color,
             bg_color="transparent",
         )
-        self.origin_label.grid(row=1, column=0, padx=10, pady=2, sticky="nsew")
-        self.origin_content = CTkLabel(
-            self.scrollable_frame,
+        origin_label.grid(row=1, column=0, padx=10, pady=2, sticky="nsew")
+        origin_content = CTkLabel(
+            scrollable_frame,
             wraplength=350,
             text=(
                 "ForgeYT was born out of the need for a reliable YouTube to MP3 converter. "
@@ -655,19 +654,19 @@ class App(CTkFrame):
             text_color=self.font_color,
             bg_color="transparent",
         )
-        self.origin_content.grid(row=2, column=0, padx=10, pady=2, sticky="nsew")
+        origin_content.grid(row=2, column=0, padx=10, pady=2, sticky="nsew")
 
         # Initial Release
-        self.release_label = CTkLabel(
-            self.scrollable_frame,
+        release_label = CTkLabel(
+            scrollable_frame,
             text="Initial Release:",
             font=("Arial", 18, "bold"),
             text_color=self.font_color,
             bg_color="transparent",
         )
-        self.release_label.grid(row=3, column=0, padx=10, pady=2, sticky="nsew")
-        self.release_content = CTkLabel(
-            self.scrollable_frame,
+        release_label.grid(row=3, column=0, padx=10, pady=2, sticky="nsew")
+        release_content = CTkLabel(
+            scrollable_frame,
             wraplength=350,
             text=(
                 "The first iteration of ForgeYT was launched in February 2023. Beginning its journey as a Node.js CLI tool, it has undergone significant evolution to become the Python GUI application you see today."
@@ -675,19 +674,19 @@ class App(CTkFrame):
             text_color=self.font_color,
             bg_color="transparent",
         )
-        self.release_content.grid(row=4, column=0, padx=10, pady=2, sticky="nsew")
+        release_content.grid(row=4, column=0, padx=10, pady=2, sticky="nsew")
 
         # Challenges
-        self.challenges_label = CTkLabel(
-            self.scrollable_frame,
+        challenges_label = CTkLabel(
+            scrollable_frame,
             text="Challenges:",
             font=("Arial", 18, "bold"),
             text_color=self.font_color,
             bg_color="transparent",
         )
-        self.challenges_label.grid(row=5, column=0, padx=10, pady=2, sticky="nsew")
-        self.challenges_content = CTkLabel(
-            self.scrollable_frame,
+        challenges_label.grid(row=5, column=0, padx=10, pady=2, sticky="nsew")
+        challenges_content = CTkLabel(
+            scrollable_frame,
             wraplength=350,
             text=(
                 "Transitioning from Node.js to Python was no small feat. Integrating `yt-dlp` with Node.js's child-process presented unique challenges, but determination and innovation prevailed."
@@ -695,19 +694,19 @@ class App(CTkFrame):
             text_color=self.font_color,
             bg_color="transparent",
         )
-        self.challenges_content.grid(row=6, column=0, padx=10, pady=2, sticky="nsew")
+        challenges_content.grid(row=6, column=0, padx=10, pady=2, sticky="nsew")
 
         # Purpose & Usage
-        self.purpose_label = CTkLabel(
-            self.scrollable_frame,
+        purpose_label = CTkLabel(
+            scrollable_frame,
             text="Purpose & Usage:",
             font=("Arial", 18, "bold"),
             text_color=self.font_color,
             bg_color="transparent",
         )
-        self.purpose_label.grid(row=7, column=0, padx=10, pady=2, sticky="nsew")
-        self.purpose_content = CTkLabel(
-            self.scrollable_frame,
+        purpose_label.grid(row=7, column=0, padx=10, pady=2, sticky="nsew")
+        purpose_content = CTkLabel(
+            scrollable_frame,
             wraplength=350,
             text=(
                 "While ForgeYT was originally designed for use within a school environment, its versatility makes it apt for varied situations. Convert YouTube videos to audio with ease, regardless of where you are."
@@ -715,19 +714,19 @@ class App(CTkFrame):
             text_color=self.font_color,
             bg_color="transparent",
         )
-        self.purpose_content.grid(row=8, column=0, padx=10, pady=2, sticky="nsew")
+        purpose_content.grid(row=8, column=0, padx=10, pady=2, sticky="nsew")
 
         # acknowledgemnts
-        self.ack_label = CTkLabel(
-            self.scrollable_frame,
+        ack_label = CTkLabel(
+            scrollable_frame,
             text="Acknowledgments:",
             font=("Arial", 18, "bold"),
             text_color=self.font_color,
             bg_color="transparent",
         )
-        self.ack_label.grid(row=9, column=0, padx=10, pady=2, sticky="nsew")
-        self.ack_content = CTkLabel(
-            self.scrollable_frame,
+        ack_label.grid(row=9, column=0, padx=10, pady=2, sticky="nsew")
+        ack_content = CTkLabel(
+            scrollable_frame,
             wraplength=350,
             text=(
                 "A heartfelt thank you to Mr. Z and DJ Stomp for their invaluable contributions. Additionally, a shout-out to the Python Discord community for their support."
@@ -735,19 +734,19 @@ class App(CTkFrame):
             text_color=self.font_color,
             bg_color="transparent",
         )
-        self.ack_content.grid(row=10, column=0, padx=10, pady=2, sticky="nsew")
+        ack_content.grid(row=10, column=0, padx=10, pady=2, sticky="nsew")
 
         # Future
-        self.ack_label = CTkLabel(
-            self.scrollable_frame,
+        ack_label = CTkLabel(
+            scrollable_frame,
             text="Future:",
             font=("Arial", 18, "bold"),
             text_color=self.font_color,
             bg_color="transparent",
         )
-        self.ack_label.grid(row=11, column=0, padx=10, pady=2, sticky="nsew")
-        self.ack_content = CTkLabel(
-            self.scrollable_frame,
+        ack_label.grid(row=11, column=0, padx=10, pady=2, sticky="nsew")
+        ack_content = CTkLabel(
+            scrollable_frame,
             wraplength=350,
             text=(
                 "ForgeYT stands proud at version 2.0. While this is likely its final form, the journey and impact it has had remain invaluable."
@@ -755,16 +754,37 @@ class App(CTkFrame):
             text_color=self.font_color,
             bg_color="transparent",
         )
-        self.ack_content.grid(row=12, column=0, padx=10, pady=2, sticky="nsew")
-
-        self.version_label = CTkLabel(
-            self.scrollable_frame,
+        ack_content.grid(row=12, column=0, padx=10, pady=2, sticky="nsew")
+        whatsnew_label = ack_label = CTkLabel(
+            scrollable_frame,
+            text="Whats New?:",
+            font=("Arial", 18, "bold"),
+            text_color=self.font_color,
+            bg_color="transparent",
+        )
+        whatsnew_label.grid(row=13, column=0, padx=10, pady=2, sticky="nsew")
+        whatsnew_content = CTkLabel(
+            scrollable_frame,
+            wraplength=350,
+            text=(
+                "- Fixed a problem where file Extentions were duplicated at the end of file name\n" +
+                "- Fixed an issue with Starting Format being reset to MP3 while the default was MP4\n" +
+                "- Added \"Open Exploer\" Checkbox in the event that the user does not want to open explorer each time\n" +
+                "- Added \"Whats New?\" Section to the About Page\n" +
+                "- Additional Optimizations"
+            ),
+            text_color=self.font_color,
+            bg_color="transparent",
+        )
+        whatsnew_content.grid(row=14, column=0, padx=10, pady=2, sticky="nsew")
+        version_label = CTkLabel(
+            scrollable_frame,
             text=f"Current Version: {currentversion}",
             text_color=self.font_color,
             bg_color="transparent",
             font=("Arial", 10, "italic"),
         )
-        self.version_label.grid(row=13, column=0, padx=10, pady=10, sticky="nsew")
+        version_label.grid(row=15, column=0, padx=10, pady=10, sticky="nsew")
 
     def insert_text_in_chunks(self, widget, text, chunk_size=50000):
         """
@@ -841,11 +861,6 @@ class App(CTkFrame):
         self.console_output.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
         # Initialize the cursor position to the end of the console_output widget
         self.cursor_position = self.console_output.index(END)
-
-    def limit_entry_size(self, *args):
-        value = self.entry_var.get()
-        if len(value) > 40:
-            self.entry_var.set(value[:40])
 
 print("starting app")
 

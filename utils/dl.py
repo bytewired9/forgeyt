@@ -1,11 +1,11 @@
-from .hooker import hooker
 from os import path
 from yt_dlp import YoutubeDL
 from subprocess import run
 from vars import filetypes
 from .config import load_config
+from tkinter import StringVar
 
-def download(yturl, ftype, app_queue, self):
+def download(yturl, ftype, app_queue, doexplorer, self):
     def convert_to_absolute(p):
         if p.startswith(("./", "../")):
             return path.abspath(p)
@@ -23,16 +23,17 @@ def download(yturl, ftype, app_queue, self):
     app_queue.put(("update_console", f"Youtube URL: {yturl}"))
 
     ydl_opts = {
-        "outtmpl": f"{convert_to_absolute(download_path)}\\%(uploader)s - %(title)s.{fileext}",
+        "outtmpl": f"{convert_to_absolute(download_path)}\\%(uploader)s - %(title)s.%(ext)s",
         "ignoreerrors": False,
-        "progress_hooks": [hooker]
+        # "verbose": True,
+        "no-mtime": True
     }
     app_queue.put(("update_console", f"Audio = {audio}"))
     app_queue.put(("update_console", f"{filetype}"))
     app_queue.put(("update_console", f"{codec}"))
     
 
-    if audio == True:
+    if audio is True:
         app_queue.put(("update_console", "Audio Path Selected"))
         ydl_opts["format"] = f"bestaudio[acodec={codec}]/best"
         ydl_opts["postprocessors"] = [{
@@ -51,9 +52,11 @@ def download(yturl, ftype, app_queue, self):
 
 
             fixedpath = path.normpath(convert_to_absolute(download_path))
-            run(["explorer", fixedpath])
+            if doexplorer.get() == "True":
+                run(["explorer", fixedpath], check=False)
 
         except Exception as e:
             app_queue.put(("update_console", f"Error during processing: {str(e)}"))
             self.show_custom_messagebox("Error", f"Error during processing: {str(e)}")
         return self.cleanup_after_thread()
+    
