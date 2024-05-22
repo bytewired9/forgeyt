@@ -1,6 +1,13 @@
-from utils import download, windowTheme, currentversion, config_file, DEFAULT_SETTINGS, load_config, resource_path
-from vars import filetypes
-from .messagebox import CustomMessageBox
+"""ForgeYT UI Section"""
+from os import path
+from urllib.parse import urlparse
+from threading import Thread, Event
+from json import dump
+from queue import Queue, Empty
+from tkinter import filedialog, StringVar
+from ctypes import windll
+from webbrowser import open as webopen
+import sys
 from customtkinter import (
     CTkScrollableFrame,
     NORMAL,
@@ -19,25 +26,25 @@ from customtkinter import (
     DISABLED,
 )
 from PIL import Image
-from ctypes import windll
-from webbrowser import open as webopen
-from os import path, getenv, makedirs, remove, name, environ, utime
-def load_modules():
-    global requests, sys, remove, urlparse, Thread, Event, load, JSONDecodeError, dump, Queue, Empty, filedialog, StringVar, run, path, getenv, makedirs
-    import sys
-    from urllib.parse import urlparse
-    from threading import Thread, Event
-    from json import load, JSONDecodeError, dump
-    from queue import Queue, Empty
-    from tkinter import filedialog, StringVar
-    from subprocess import run
-    import requests
+import requests
+from utils import (
+    download,
+    windowTheme,
+    CURRENT_VERSION,
+    config_file,
+    DEFAULT_SETTINGS,
+    load_config,
+    resource_path
+    )
+from vars import filetypes
+from .messagebox import CustomMessageBox
 
 class App(CTkFrame):
+    """App class that includes all the fun spaghetti that
+    I wont fix because I cant read it :P"""
     # print("app class started")
     def flush(self):
         pass
-
 
     def __init__(self, root):
         print("initializing...")
@@ -102,13 +109,10 @@ class App(CTkFrame):
         )
         self.console_output.grid_forget()
         self.cursor_position = "1.0"
-        # print("loading heavier modules...")
-        load_modules()
         # print("loading globals...")
         globals()
         # print("setting appearance mode")
         set_appearance_mode(windowTheme)
-        
         # print("setting output buffer")
         self.output_buffer = ""
         self.open_explorer = StringVar(value="True")
@@ -164,7 +168,7 @@ class App(CTkFrame):
             16  # This would be the initial font size for your elements.
         )
         # print("setting dropdown menu")
-        self.dropdown_options = [key.upper() for key in filetypes.keys()]
+        self.dropdown_options = [key.upper() for key in filetypes]
         self.dropdown_menu = CTkComboBox(
             self.right_frame, values=self.dropdown_options, corner_radius=6
         )
@@ -174,7 +178,7 @@ class App(CTkFrame):
         self.profile_entry.grid_forget()  # Initially hide it if the home is not the default screen
         # print("showing home")
         def close_console():
-                windll.user32.ShowWindow(windll.kernel32.GetConsoleWindow(), 0)
+            windll.user32.ShowWindow(windll.kernel32.GetConsoleWindow(), 0)
         if getattr(sys, 'frozen', False):
             self.show_home()
             close_console()
@@ -356,7 +360,7 @@ class App(CTkFrame):
 
     def get_latest_release(self):
         url = "https://api.github.com/repos/ForgedCore8/forgeyt/releases/latest"
-        response = requests.get(url)
+        response = requests.get(url, timeout=10)
         if response.status_code == 200:
             return response.json().get('tag_name')
         else:
@@ -367,7 +371,6 @@ class App(CTkFrame):
         return latest > current
 
     def show_home(self):
-        
 
         self.current_page = "home"
         # Clear existing widgets
@@ -425,7 +428,7 @@ class App(CTkFrame):
         self.dropdown_menu.grid(
             row=4, column=0, pady=5, padx=60, sticky="ew"
         )  # Adjust padding and placement accordingly
-        self.open_explorerbox = CTkCheckBox(self.right_frame, text="Open explorer?",
+        self.open_explorerbox = CTkCheckBox(self.right_frame, text="Open in File Explorer",
                                      variable=self.open_explorer, onvalue="True", offvalue="False")
         self.open_explorerbox.grid(
             row=5, column=0, pady=5, padx=60, sticky="ew"
@@ -435,7 +438,7 @@ class App(CTkFrame):
         else:
             self.start_button.grid(row=6, column=0, pady=(30,0))
         latest_version = self.get_latest_release()
-        if latest_version and self.is_newer_version(currentversion, latest_version):
+        if latest_version and self.is_newer_version(CURRENT_VERSION, latest_version):
             self.update_button = CTkButton(
                 self.right_frame,
                 text="New version available!",
@@ -445,19 +448,19 @@ class App(CTkFrame):
 
     def show_settings(self):
         config_data = load_config()
-        download_path = config_data["download_path"]
+        #download_path = config_data["download_path"]
         self.right_frame.grid_columnconfigure(0, weight=1)
-        windowTheme = config_data["theme"]
+        #windowTheme = config_data["theme"]
         for i in range(4):  # We have 4 rows
             self.right_frame.grid_rowconfigure(i, weight=3)  # Make it absolute
-        # self.right_frame.grid_rowconfigure(2, weight=0)  # If you want the row of the entry box to expand with the window
+        # self.right_frame.grid_rowconfigure(2, weight=0)
         self.right_frame.grid_columnconfigure(
             0, weight=1
         )  # Letting the column still expand horizontally
 
         def reset_to_default():
             # Update the config file
-            with open(config_file, "w") as f:
+            with open(config_file, "w", encoding="utf-8") as f:
                 dump(DEFAULT_SETTINGS, f, indent=4)
 
             # Update the GUI elements
@@ -468,8 +471,6 @@ class App(CTkFrame):
 
             # Inform the user
             self.show_custom_messagebox("Success", "Settings reset to default!")
-        def add_to_start():
-            print("hi")
 
         def change_appearance_mode_event(new_appearance_mode: str):
             set_appearance_mode(new_appearance_mode)
@@ -510,7 +511,7 @@ class App(CTkFrame):
             data = {"theme": theme_value, "download_path": filepath_value}
 
             # Save to JSON
-            with open(config_file, "w") as f:
+            with open(config_file, "w", encoding="utf-8") as f:
                 dump(data, f, indent=4)
 
             # Apply the appearance mode
@@ -648,7 +649,8 @@ class App(CTkFrame):
             wraplength=350,
             text=(
                 "ForgeYT was born out of the need for a reliable YouTube to MP3 converter. "
-                "With many of the popular YTMP3 websites being blocked at school, and others feeling dubious at best, "
+                "With many of the popular YTMP3 websites being blocked"+
+                " at school, and others feeling dubious at best, "
                 "there was a clear necessity for a trustworthy tool."
             ),
             text_color=self.font_color,
@@ -669,7 +671,9 @@ class App(CTkFrame):
             scrollable_frame,
             wraplength=350,
             text=(
-                "The first iteration of ForgeYT was launched in February 2023. Beginning its journey as a Node.js CLI tool, it has undergone significant evolution to become the Python GUI application you see today."
+                "The first iteration of ForgeYT was launched in February 2023."+
+                " Beginning its journey as a Node.js CLI tool, it has undergone"+
+                " significant evolution to become the Python GUI application you see today."
             ),
             text_color=self.font_color,
             bg_color="transparent",
@@ -689,7 +693,9 @@ class App(CTkFrame):
             scrollable_frame,
             wraplength=350,
             text=(
-                "Transitioning from Node.js to Python was no small feat. Integrating `yt-dlp` with Node.js's child-process presented unique challenges, but determination and innovation prevailed."
+                "Transitioning from Node.js to Python was no small feat."+
+                " Integrating `yt-dlp` with Node.js's child-process presented "+
+                "unique challenges, but determination and innovation prevailed."
             ),
             text_color=self.font_color,
             bg_color="transparent",
@@ -709,7 +715,9 @@ class App(CTkFrame):
             scrollable_frame,
             wraplength=350,
             text=(
-                "While ForgeYT was originally designed for use within a school environment, its versatility makes it apt for varied situations. Convert YouTube videos to audio with ease, regardless of where you are."
+                "While ForgeYT was originally designed for use within a school" +
+                " environment, its versatility makes it apt for varied situations." +
+                " Convert YouTube videos to audio with ease, regardless of where you are."
             ),
             text_color=self.font_color,
             bg_color="transparent",
@@ -729,7 +737,9 @@ class App(CTkFrame):
             scrollable_frame,
             wraplength=350,
             text=(
-                "A heartfelt thank you to Mr. Z and DJ Stomp for their invaluable contributions. Additionally, a shout-out to the Python Discord community for their support."
+                "A heartfelt thank you to Mr. Z and DJ Stomp for their"+
+                " invaluable contributions. Additionally, a shout-out to " +
+                "the Python Discord community for their support."
             ),
             text_color=self.font_color,
             bg_color="transparent",
@@ -749,7 +759,9 @@ class App(CTkFrame):
             scrollable_frame,
             wraplength=350,
             text=(
-                "ForgeYT stands proud at version 2.0. While this is likely its final form, the journey and impact it has had remain invaluable."
+                "ForgeYT stands proud at version 2.0. While this is " +
+                "likely its final form, the journey and impact it has "+
+                "had remain invaluable."
             ),
             text_color=self.font_color,
             bg_color="transparent",
@@ -767,9 +779,12 @@ class App(CTkFrame):
             scrollable_frame,
             wraplength=350,
             text=(
-                "- Fixed a problem where file Extentions were duplicated at the end of file name\n" +
-                "- Fixed an issue with Starting Format being reset to MP3 while the default was MP4\n" +
-                "- Added \"Open Exploer\" Checkbox in the event that the user does not want to open explorer each time\n" +
+                "- Fixed a problem where file Extensions were"+ 
+                "duplicated at the end of file name\n" +
+                "- Fixed an issue with Starting Format being" +
+                " reset to MP3 while the default was MP4\n" +
+                "- Added \"Open Explorer\" Checkbox in the event"+
+                " that the user does not want to open explorer each time\n" +
                 "- Added \"Whats New?\" Section to the About Page\n" +
                 "- Additional Optimizations"
             ),
@@ -779,7 +794,7 @@ class App(CTkFrame):
         whatsnew_content.grid(row=14, column=0, padx=10, pady=2, sticky="nsew")
         version_label = CTkLabel(
             scrollable_frame,
-            text=f"Current Version: {currentversion}",
+            text=f"Current Version: {CURRENT_VERSION}",
             text_color=self.font_color,
             bg_color="transparent",
             font=("Arial", 10, "italic"),
@@ -863,5 +878,3 @@ class App(CTkFrame):
         self.cursor_position = self.console_output.index(END)
 
 print("starting app")
-
-

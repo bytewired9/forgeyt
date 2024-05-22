@@ -1,6 +1,9 @@
-from .app import App
+"""Initiatior for app"""
 from customtkinter import CTk
+from .app import App
+
 def start_app():
+    """Letsa go"""
     root = CTk(fg_color=("#f3d3da", "#031b16"))
-    app = App(root)
+    App(root)
     root.mainloop()

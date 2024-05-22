@@ -1,11 +1,12 @@
+"""dl.py enables ForgeYT to actually download things"""
 from os import path
-from yt_dlp import YoutubeDL
 from subprocess import run
+from yt_dlp import YoutubeDL
 from vars import filetypes
 from .config import load_config
-from tkinter import StringVar
 
 def download(yturl, ftype, app_queue, doexplorer, self):
+    """Yeah this just downloads stuff. pylints forcing me to type this"""
     def convert_to_absolute(p):
         if p.startswith(("./", "../")):
             return path.abspath(p)
@@ -31,7 +32,6 @@ def download(yturl, ftype, app_queue, doexplorer, self):
     app_queue.put(("update_console", f"Audio = {audio}"))
     app_queue.put(("update_console", f"{filetype}"))
     app_queue.put(("update_console", f"{codec}"))
-    
 
     if audio is True:
         app_queue.put(("update_console", "Audio Path Selected"))

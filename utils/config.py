@@ -1,8 +1,9 @@
+"""Initialize Standard Configurations"""
 from os import path, getenv, makedirs
 from json import load, JSONDecodeError
 
 appdata_path = getenv("APPDATA")
-currentversion = "2.3.0"
+CURRENT_VERSION = "2.3.1"
 prompt = input
 config_folder = path.join(appdata_path, "ForgeYT")
 config_file = path.join(config_folder, "config.json")
@@ -16,7 +17,7 @@ def load_config():
     makeconfig()
     if not path.exists(config_file):
         return DEFAULT_SETTINGS
-    with open(config_file, "r") as f:
+    with open(config_file, "r", encoding="utf-8") as f:
         try:
             return load(f)
         except JSONDecodeError:
@@ -28,10 +29,10 @@ download_path = config_data["download_path"]
 windowTheme = config_data["theme"]
 
 def resource_path(relative_path):
+    """Get absolute path to resource, works for dev and for PyInstaller"""
     try:
         from sys import _MEIPASS
     except ImportError:
         _MEIPASS = None
-    """Get absolute path to resource, works for dev and for PyInstaller"""
     base_path = _MEIPASS if _MEIPASS is not None else path.abspath(".")
     return path.join(base_path, relative_path)

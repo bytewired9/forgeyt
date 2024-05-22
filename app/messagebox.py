@@ -50,7 +50,7 @@ class CustomMessageBox:
 
         # Set the new position and dimensions
         self.top.geometry(
-            "%dx%d+%d+%d" % (window_width, window_height, center_x, center_y)
+            f"{window_width}x{window_height}+{center_x}+{center_y}"
         )
 
     def destroy_messagebox(self):

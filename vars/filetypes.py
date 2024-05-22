@@ -1,3 +1,4 @@
+"""Just a big list of filetypes and all their related things"""
 filetypes = {
  "mp4": {"filetype": "mp4", "fileext": "mp4", "audio": False, "codec": "h264"},
  "mp3": {"filetype": "mp3", "fileext": "mp3", "audio": True, "codec": "mp3"},
