@@ -27,7 +27,8 @@ To use `forgeyt`, simply copy the video URL into the provided field, select your
 ## Compiling
 
 To compile `forgeyt`, you just need to type the following command:
-```nuitka --standalone --onefile --windows-icon-from-ico=ForgeYT.ico --include-data-file=About.png=About.png --include-data-file=About_dark.png=About_dark.png --include-data-file=Console.png=Console.png --include-data-file=Console_dark.png=Console_dark.png --include-data-file=download.png=download.png --include-data-file=download_dark.png=download_dark.png --include-data-file=ForgeYT.png=ForgeYT.png --include-data-file=ForgeYT.ico=ForgeYT.ico --include-data-file=Home.png=Home.png --include-data-file=Home_dark.png=Home_dark.png --include-data-file=Settings.png=Settings.png --include-data-file=Settings_dark.png=Settings_dark.png --include-data-file=ffmpeg.exe=ffmpeg.exe --include-data-file=ffprobe.exe=ffprobe.exe --include-data-dir=utils=utils --include-data-dir=app=app --include-data-dir=vars=vars --disable-console forgeyt.py
+```
+nuitka --standalone --onefile --windows-icon-from-ico=ForgeYT.ico --include-data-file=About.png=About.png --include-data-file=About_dark.png=About_dark.png --include-data-file=Console.png=Console.png --include-data-file=Console_dark.png=Console_dark.png --include-data-file=download.png=download.png --include-data-file=download_dark.png=download_dark.png --include-data-file=ForgeYT.png=ForgeYT.png --include-data-file=ForgeYT.ico=ForgeYT.ico --include-data-file=Home.png=Home.png --include-data-file=Home_dark.png=Home_dark.png --include-data-file=Settings.png=Settings.png --include-data-file=Settings_dark.png=Settings_dark.png --include-data-file=ffmpeg.exe=ffmpeg.exe --include-data-file=ffprobe.exe=ffprobe.exe --include-data-dir=utils=utils --include-data-dir=app=app --include-data-dir=vars=vars --disable-console forgeyt.py
 ```
 
 ## Contributing
