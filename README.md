@@ -58,11 +58,11 @@ We welcome contributions to `forgeyt`! Here's how you can contribute:
 
 ## License
 
-`forgeyt` is distributed under the GNU GPL 3.0 license. See the [LICENSE](https://github.com/ForgedCore8/forgeyt/blob/main/LICENSE) file for more details.
+`forgeyt` is distributed under the GNU GPL 3.0 license. See the [LICENSE](https://github.com/bytewired9/forgeyt/blob/main/LICENSE) file for more details.
 
 ## Contact
 
-If you encounter any problems or have questions about `forgeyt`, feel free to reach out on Discord: @forgedcore8 in [StompZone](https://discord.io/stomp), or create an issue in the [issue tracker](https://github.com/ForgedCore8/forgeyt/issues).
+If you encounter any problems or have questions about `forgeyt`, feel free to reach out on Discord: @bytewired9 in [StompZone](https://discord.io/stomp), or create an issue in the [issue tracker](https://github.com/bytewired9/forgeyt/issues).
 
 ## Acknowledgments
 
