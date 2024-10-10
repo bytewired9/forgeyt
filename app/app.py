@@ -139,8 +139,8 @@ class App(CTkFrame):
         self.loading_label.grid_forget()
         # print("setting start button")
         self.start_image = CTkImage(
-            light_image=Image.open(resource_path("download.png")),
-            dark_image=Image.open(resource_path("download_dark.png")),
+            light_image=Image.open(resource_path("assets/download.png")),
+            dark_image=Image.open(resource_path("assets/download_dark.png")),
             size=(30, 30),
         )
         self.start_button = CTkButton(
@@ -183,7 +183,7 @@ class App(CTkFrame):
             self.show_home()
             close_console()
             # print("setting icon path")
-            icon_path = resource_path("ForgeYT.ico")
+            icon_path = resource_path("assets/ForgeYT.ico")
             self.root.iconbitmap(default=icon_path)
         else:
             self.show_home()
@@ -258,26 +258,26 @@ class App(CTkFrame):
         button_height = 57
         button_padding_y = 5
         self.forgeyt_image = CTkImage(
-            Image.open(resource_path("ForgeYT.png")), size=(120, 120)
+            Image.open(resource_path("assets/ForgeYT.png")), size=(120, 120)
         )
         self.home_image = CTkImage(
-            light_image=Image.open(resource_path("Home.png")),
-            dark_image=Image.open(resource_path("Home_dark.png")),
+            light_image=Image.open(resource_path("assets/Home.png")),
+            dark_image=Image.open(resource_path("assets/Home_dark.png")),
             size=(button_height - 20, button_height - 20),
         )
         self.settings_image = CTkImage(
-            light_image=Image.open(resource_path("Settings.png")),
-            dark_image=Image.open(resource_path("Settings_dark.png")),
+            light_image=Image.open(resource_path("assets/Settings.png")),
+            dark_image=Image.open(resource_path("assets/Settings_dark.png")),
             size=(button_height - 20, button_height - 20),
         )
         self.about_image = CTkImage(
-            light_image=Image.open(resource_path("About.png")),
-            dark_image=Image.open(resource_path("About_dark.png")),
+            light_image=Image.open(resource_path("assets/About.png")),
+            dark_image=Image.open(resource_path("assets/About_dark.png")),
             size=(button_height - 20, button_height - 20),
         )
         self.console_image = CTkImage(
-            light_image=Image.open(resource_path("Console.png")),
-            dark_image=Image.open(resource_path("Console_dark.png")),
+            light_image=Image.open(resource_path("assets/Console.png")),
+            dark_image=Image.open(resource_path("assets/Console_dark.png")),
             size=(button_height - 20, button_height - 20),
         )
         self.image_label = CTkLabel(self.left_frame, image=self.forgeyt_image, text="")
