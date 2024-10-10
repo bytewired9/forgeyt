@@ -32,7 +32,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,
     console=False,  # This hides the console window
     icon='assets/ForgeYT.ico',  # Set the custom icon
 )
