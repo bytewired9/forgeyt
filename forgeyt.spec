@@ -1,50 +1,39 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-block_cipher = None
 
 a = Analysis(
     ['forgeyt.py'],
-    pathex=['.'],  # The current directory
+    pathex=[],
     binaries=[],
-    datas=[
-        ('app', 'app'),  # Include the 'app' folder
-        ('assets', 'assets'),  # Include the 'assets' folder
-        ('utils', 'utils'),  # Include the 'utils' folder
-        ('vars', 'vars'),  # Include the 'vars' folder
-    ],
-    hiddenimports=[],  # Include hidden imports if necessary
+    datas=[('./app', 'app/'), ('./assets', 'assets/'), ('./utils', 'utils/'), ('./vars', 'vars/')],
+    hiddenimports=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=['venv'],  # Exclude the 'venv' folder
-    win_no_prefer_redirects=False,
-    win_private_assemblies=False,
-    cipher=block_cipher,
-    noarchive=True,  # Ensure no archive is used, making it fully standalone
+    excludes=[],
+    noarchive=False,
+    optimize=0,
 )
-
-pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+pyz = PYZ(a.pure)
 
 exe = EXE(
     pyz,
     a.scripts,
+    a.binaries,
+    a.datas,
     [],
-    exclude_binaries=False,  # Include all binaries
-    name='forgeyt',
+    name='ForgeYT',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=False,  # No UPX compression to avoid issues with certain binaries
-    console=False,  # Hide the console window
-    icon='assets/ForgeYT.ico',  # Set the custom icon
-)
-
-coll = COLLECT(
-    exe,
-    a.binaries,  # Include all necessary binaries
-    a.zipfiles,
-    a.datas,  # Include all necessary data files
-    strip=False,
-    upx=False,  # No UPX compression
-    name='forgeyt'
+    upx=True,
+    upx_exclude=[],
+    runtime_tmpdir=None,
+    console=False,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+    icon=['assets\\ForgeYT.ico'],
 )

@@ -29,6 +29,7 @@ To use `forgeyt`, simply copy the video URL into the provided field, select your
 To compile `forgeyt`, you just need to type the following command:
 ```
 $ pyinstaller forgeyt.spec
+
 ```
 
 ## Contributing
