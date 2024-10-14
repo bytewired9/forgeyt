@@ -57,6 +57,7 @@ def extract_ffmpeg(archive_path, extract_to):
         print("Falling back to 7-Zip extraction method...")
         extract_with_7zip(archive_path, extract_to)
     os.remove(archive_path)
+    print("Deleted " + archive_path)
 
 
 # Step 6: Move ffmpeg.exe and ffprobe.exe to ./ffmpeg and delete the extracted folder
