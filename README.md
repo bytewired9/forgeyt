@@ -26,11 +26,13 @@ To use `forgeyt`, simply copy the video URL into the provided field, select your
 
 ## Compiling
 
-To compile `forgeyt`, you just need to type the following command:
+To compile `forgeyt`, you just need to enter the following commands:
 ```
-$ pyinstaller forgeyt.spec
-
+$ python -m venv venv
+$ ./venv/scripts/activate
+$ python build.py
 ```
+*Note: 7zip or Win11 24H2≤ is required to build.*
 
 ## Contributing
 

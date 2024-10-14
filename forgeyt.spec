@@ -5,7 +5,14 @@ a = Analysis(
     ['forgeyt.py'],
     pathex=[],
     binaries=[],
-    datas=[('./app', 'app/'), ('./assets', 'assets/'), ('./utils', 'utils/'), ('./vars', 'vars/')],
+    datas=[
+        ('./app', 'app/'),
+        ('./assets', 'assets/'),
+        ('./utils', 'utils/'),
+        ('./vars', 'vars/'),
+        ('./ffmpeg/ffmpeg.exe', '.'),
+        ('./ffmpeg/ffprobe.exe', '.')
+    ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -14,6 +21,7 @@ a = Analysis(
     noarchive=False,
     optimize=0,
 )
+
 pyz = PYZ(a.pure)
 
 exe = EXE(
