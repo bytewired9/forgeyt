@@ -83,7 +83,7 @@ def move_ffmpeg_binaries(ffmpeg_dir):
         dest_path = os.path.join(ffmpeg_dir, file_name)
         if os.path.exists(src_path):
             shutil.move(src_path, dest_path)
-            print(f"Moved {file_name} to {ffmpeg_dir}")
+            print(f"Moved {file_name} to {os.path.abspath(ffmpeg_dir)}")
         else:
             print(f"Error: {file_name} not found in {bin_folder}")
 
