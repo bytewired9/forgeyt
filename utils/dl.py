@@ -26,8 +26,7 @@ def download(yturl, ftype, app_queue, doexplorer, self):
     ydl_opts = {
         "outtmpl": f"{convert_to_absolute(download_path)}\\%(uploader)s - %(title)s.%(ext)s",
         "ignoreerrors": False,
-        # "verbose": True,
-        "no-mtime": True
+        "no-mtime": True,
     }
     app_queue.put(("update_console", f"Audio = {audio}"))
     app_queue.put(("update_console", f"{filetype}"))
@@ -37,19 +36,22 @@ def download(yturl, ftype, app_queue, doexplorer, self):
         app_queue.put(("update_console", "Audio Path Selected"))
         ydl_opts["format"] = f"bestaudio[acodec={codec}]/best"
         ydl_opts["postprocessors"] = [{
-        "key": "FFmpegExtractAudio",
-        "preferredcodec": codec,
-        "preferredquality": "192",
-    }]
+            "key": "FFmpegExtractAudio",
+            "preferredcodec": codec,
+            "preferredquality": "192"
+        }]
     else:
         app_queue.put(("update_console", "Video Path Selected"))
-        ydl_opts["format"] = f"bestvideo[ext={fileext}][vcodec={codec}]+bestaudio[ext=m4a]/best"
+        ydl_opts["format"] = f"bestvideo[ext={fileext}][vcodec={codec}]+bestaudio[ext=m4a]/bestvideo+bestaudio/best"
+        ydl_opts["postprocessors"] = [{
+            "key": "FFmpegVideoConvertor",
+            "preferedformat": fileext  # Convert to desired video format if needed
+        }]
 
     with YoutubeDL(ydl_opts) as ydl:
         try:
             ydl.download([yturl])
             app_queue.put(("update_console", "Completed."))
-
 
             fixedpath = path.normpath(convert_to_absolute(download_path))
             if doexplorer.get() == "True":
@@ -59,4 +61,3 @@ def download(yturl, ftype, app_queue, doexplorer, self):
             app_queue.put(("update_console", f"Error during processing: {str(e)}"))
             self.show_custom_messagebox("Error", f"Error during processing: {str(e)}")
         return self.cleanup_after_thread()
-    
