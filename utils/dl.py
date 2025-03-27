@@ -1,6 +1,7 @@
 """dl.py enables ForgeYT to actually download things"""
 from os import path
 from subprocess import run
+import sys
 from yt_dlp import YoutubeDL
 from vars import filetypes
 from .config import load_config
@@ -8,8 +9,12 @@ from .config import load_config
 def download(yturl, ftype, app_queue, doexplorer, self):
     """Yeah this just downloads stuff. pylints forcing me to type this"""
     def convert_to_absolute(p):
+        # If the path starts with ./ or ../ then join it with the executable's directory.
         if p.startswith(("./", "../")):
-            return path.abspath(p)
+            # Use the folder of the executable if frozen (e.g., when bundled with PyInstaller),
+            # otherwise use the folder of the current file.
+            base_path = path.dirname(sys.executable) if getattr(sys, 'frozen', False) else path.dirname(__file__)
+            return path.abspath(path.join(base_path, p))
         return p
 
     config_data = load_config()
@@ -33,20 +38,21 @@ def download(yturl, ftype, app_queue, doexplorer, self):
     app_queue.put(("update_console", f"{codec}"))
 
     if audio is True:
-        app_queue.put(("update_console", "Audio Path Selected"))
-        ydl_opts["format"] = f"bestaudio[acodec={codec}]/best"
+        # Let yt-dlp pick the best audio, then convert
+        ydl_opts["format"] = "bestaudio/best"
         ydl_opts["postprocessors"] = [{
             "key": "FFmpegExtractAudio",
-            "preferredcodec": codec,
+            "preferredcodec": codec,         # e.g., mp3
             "preferredquality": "192"
         }]
     else:
-        app_queue.put(("update_console", "Video Path Selected"))
-        ydl_opts["format"] = f"bestvideo[ext={fileext}][vcodec={codec}]+bestaudio[ext=m4a]/bestvideo+bestaudio/best"
+        # Let yt-dlp pick the best video + best audio, then convert
+        ydl_opts["format"] = "bestvideo+bestaudio/best"
         ydl_opts["postprocessors"] = [{
             "key": "FFmpegVideoConvertor",
-            "preferedformat": fileext  # Convert to desired video format if needed
+            "preferedformat": fileext       # e.g., mp4
         }]
+
 
     with YoutubeDL(ydl_opts) as ydl:
         try:
