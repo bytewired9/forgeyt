@@ -10,7 +10,7 @@ config_file = path.join(config_folder, "config.json")
 # In utils/config.py or the fallback section in main_window.py
 DEFAULT_SETTINGS = {
     "theme": "system",
-    "download_path": path.expanduser("~"),
+    "download_path": "./video_downloads/",
     "open_folder_after_download": True, # Default for the HOME page checkbox initial state
     # --- New Defaults ---
     "check_for_updates_on_startup": True,

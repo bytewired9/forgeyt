@@ -77,13 +77,15 @@ except ImportError as e:
 
 try:
     # Assuming vars/__init__.py exports 'filetypes' from vars/filetypes.py
-    from vars import filetypes
+    from vars import filetypes, video_codecs_list, audio_codecs_list 
 except ImportError as e:
     print(f"CRITICAL ERROR: Failed importing 'filetypes' from vars: {e}. Using placeholder.")
     filetypes = {
         "mp4": {"fileext": "mp4", "audio": False, "codec": "h264"},
         "mp3": {"fileext": "mp3", "audio": True, "codec": "mp3"}
     }
+    video_codecs_list = ["Auto", "h264"] # <-- ADDED PLACEHOLDER
+    audio_codecs_list = ["Auto", "aac", "mp3"] # <-- ADDED PLACEHOLDER
 # --- End Utility/Variable Imports ---
 
 
@@ -448,35 +450,36 @@ class App(QWidget):
         """ Creates (if needed) and shows the Home page content with expanded download options. """
         self.current_page = "home"
         if not self._home_initialized:
-            # Use a main vertical layout
-            main_page_layout = QVBoxLayout(self.home_page_widget)
+            # Use a main vertical layout for the home page widget
+            main_page_layout = QVBoxLayout(self.home_page_widget) # Apply layout TO the widget
             main_page_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
-            main_page_layout.setSpacing(15) # Increased spacing between sections
+            main_page_layout.setSpacing(15)
 
             # --- Top Section (URL, Basic Format) ---
-            top_group = QWidget()
-            top_layout = QVBoxLayout(top_group)
+            top_group = QWidget() # Container for this section
+            top_layout = QVBoxLayout(top_group) # Layout FOR the container
             top_layout.setSpacing(10)
-            top_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            top_layout.setAlignment(Qt.AlignmentFlag.AlignCenter) # Center content within top_group
 
             title = QLabel("ForgeYT"); title.setObjectName("pageTitle")
             top_layout.addWidget(title, 0, Qt.AlignmentFlag.AlignCenter)
 
-            url_label = QLabel("Enter Video/Playlist URL") # Updated label
+            url_label = QLabel("Enter Video/Playlist URL")
             top_layout.addWidget(url_label, 0, Qt.AlignmentFlag.AlignCenter)
+
             self.profile_entry = QLineEdit(); self.profile_entry.setPlaceholderText("Paste YouTube URL here...")
             self.profile_entry.setMinimumWidth(450); top_layout.addWidget(self.profile_entry, 0, Qt.AlignmentFlag.AlignCenter)
 
-            # Basic Format Grid (File Type, Qualities)
+            # Basic Format Grid (File Type, Qualities, Codecs)
             format_grid = QGridLayout()
             format_grid.setColumnStretch(1, 1)
             format_grid.setHorizontalSpacing(10)
             format_grid.setVerticalSpacing(8)
-            format_grid.setContentsMargins(0, 5, 0, 5)
+            format_grid.setContentsMargins(0, 15, 0, 5) # Added top margin for spacing
 
+            # Row 0: File Type
             dropdown_label = QLabel("File Type:")
             self.dropdown_menu = QComboBox(); self.dropdown_menu.setMinimumWidth(150)
-            # ... (populate dropdown_menu as before) ...
             if isinstance(filetypes, dict):
                 self.dropdown_menu.addItems([key.upper() for key in filetypes.keys()])
             else:
@@ -487,116 +490,113 @@ class App(QWidget):
             format_grid.addWidget(dropdown_label, 0, 0, Qt.AlignmentFlag.AlignRight)
             format_grid.addWidget(self.dropdown_menu, 0, 1)
 
+            # Row 1: Video Quality
             self.video_quality_label = QLabel("Video Quality:")
             self.video_quality_combo = QComboBox(); self.video_quality_combo.setMinimumWidth(150)
             self.video_quality_combo.addItems(["Best", "1080p", "720p", "480p", "360p"])
             format_grid.addWidget(self.video_quality_label, 1, 0, Qt.AlignmentFlag.AlignRight)
             format_grid.addWidget(self.video_quality_combo, 1, 1)
 
+            # Row 2: Video Codec
+            self.video_codec_label = QLabel("Video Codec:")
+            self.video_codec_combo = QComboBox(); self.video_codec_combo.setMinimumWidth(150)
+            self.video_codec_combo.addItems(video_codecs_list)
+            self.video_codec_combo.setToolTip("Choose preferred video codec (if possible). 'Auto' lets yt-dlp decide.")
+            format_grid.addWidget(self.video_codec_label, 2, 0, Qt.AlignmentFlag.AlignRight)
+            format_grid.addWidget(self.video_codec_combo, 2, 1)
+
+            # Row 3: Audio Quality
             self.audio_quality_label = QLabel("Audio Quality:")
             self.audio_quality_combo = QComboBox(); self.audio_quality_combo.setMinimumWidth(150)
             self.audio_quality_combo.addItems(["Best (≈192k)", "High (128k)", "Medium (96k)", "Low (64k)"])
-            format_grid.addWidget(self.audio_quality_label, 2, 0, Qt.AlignmentFlag.AlignRight)
-            format_grid.addWidget(self.audio_quality_combo, 2, 1)
+            format_grid.addWidget(self.audio_quality_label, 3, 0, Qt.AlignmentFlag.AlignRight)
+            format_grid.addWidget(self.audio_quality_combo, 3, 1)
 
-            top_layout.addLayout(format_grid) # Add grid to top section
-            main_page_layout.addWidget(top_group) # Add top section to main layout
+            # Row 4: Audio Codec
+            self.audio_codec_label = QLabel("Audio Codec:")
+            self.audio_codec_combo = QComboBox(); self.audio_codec_combo.setMinimumWidth(150)
+            self.audio_codec_combo.addItems(audio_codecs_list)
+            self.audio_codec_combo.setToolTip("Choose preferred audio codec (if possible). 'Auto' lets yt-dlp decide.")
+            format_grid.addWidget(self.audio_codec_label, 4, 0, Qt.AlignmentFlag.AlignRight)
+            format_grid.addWidget(self.audio_codec_combo, 4, 1)
+
+            # ***** FIX 1: Add the format_grid layout to the top_layout *****
+            top_layout.addLayout(format_grid)
+
+            # ***** FIX 2: Add the top_group widget (containing layout) to the main page layout *****
+            main_page_layout.addWidget(top_group)
 
             # --- Additional Options Sections using GroupBoxes ---
-            options_layout = QHBoxLayout() # Layout to hold group boxes side-by-side if space allows
+            options_layout = QHBoxLayout() # Layout to hold group boxes
             options_layout.setSpacing(15)
-
             # --- GroupBox 1: Playlist & Output ---
-            playlist_output_group = QGroupBox("Playlist && Output Options")
+            playlist_output_group = QGroupBox("Playlist & Output Options")
             po_layout = QVBoxLayout(playlist_output_group)
             po_layout.setSpacing(8)
-
             self.playlist_range_entry = QLineEdit()
-            self.playlist_range_entry.setPlaceholderText("e.g., 2-5, 8, 10-") # Tooltip added below
+            self.playlist_range_entry.setPlaceholderText("e.g., 2-5, 8, 10-")
             self.playlist_range_entry.setToolTip("Specify playlist items (e.g., '2-5, 8, 10-'). Leave empty for single video or full playlist.")
             po_layout.addWidget(QLabel("Playlist Items:"))
             po_layout.addWidget(self.playlist_range_entry)
-
             self.playlist_reverse_checkbox = QCheckBox("Download playlist items in reverse order")
             po_layout.addWidget(self.playlist_reverse_checkbox)
-
-            po_layout.addSpacing(10) # Separator
-
+            po_layout.addSpacing(10)
             self.filename_template_entry = QLineEdit()
-            self.filename_template_entry.setPlaceholderText("%(uploader)s - %(title)s.%(ext)s") # Default
+            self.filename_template_entry.setPlaceholderText("%(uploader)s - %(title)s.%(ext)s")
             self.filename_template_entry.setToolTip("Optional: Customize output filename. See yt-dlp docs for placeholders.")
             po_layout.addWidget(QLabel("Custom Filename Template (Optional):"))
             po_layout.addWidget(self.filename_template_entry)
-
             self.keep_original_checkbox = QCheckBox("Keep original file after conversion")
             self.keep_original_checkbox.setToolTip("Relevant if format conversion occurs (e.g., webm to mp4).")
             po_layout.addWidget(self.keep_original_checkbox)
-
-            self.open_explorer_checkbox = QCheckBox("Open folder after download") # Moved here
+            self.open_explorer_checkbox = QCheckBox("Open folder after download")
             initial_checked_state = self._config.get("open_folder_after_download", True)
             self.open_explorer_checkbox.setChecked(bool(initial_checked_state))
             po_layout.addWidget(self.open_explorer_checkbox)
-
-
             po_layout.addStretch(1)
             options_layout.addWidget(playlist_output_group)
 
             # --- GroupBox 2: Metadata & Network ---
-            metadata_network_group = QGroupBox("Metadata && Network Options")
+            metadata_network_group = QGroupBox("Metadata & Network Options")
+            self.metadata_network_group = metadata_network_group # Store reference if needed
             mn_layout = QVBoxLayout(metadata_network_group)
             mn_layout.setSpacing(8)
-
             self.embed_metadata_checkbox = QCheckBox("Embed general metadata")
             mn_layout.addWidget(self.embed_metadata_checkbox)
-
             self.embed_chapters_checkbox = QCheckBox("Embed chapters")
             mn_layout.addWidget(self.embed_chapters_checkbox)
-
-            self.thumbnail_checkbox = QCheckBox("Embed thumbnail") # Kept separate for clarity
+            self.thumbnail_checkbox = QCheckBox("Embed thumbnail")
             mn_layout.addWidget(self.thumbnail_checkbox)
-
             self.write_infojson_checkbox = QCheckBox("Save metadata to .info.json file")
             mn_layout.addWidget(self.write_infojson_checkbox)
-
-            mn_layout.addSpacing(10) # Separator (Subtitles)
-
-            self.subtitles_checkbox = QCheckBox("Download subtitles (if available)") # Master switch
+            mn_layout.addSpacing(10)
+            self.subtitles_checkbox = QCheckBox("Download subtitles (if available)")
             mn_layout.addWidget(self.subtitles_checkbox)
-
             self.subtitle_langs_entry = QLineEdit()
-            self.subtitle_langs_entry.setPlaceholderText("en,es") # Example
+            self.subtitle_langs_entry.setPlaceholderText("en,es")
             self.subtitle_langs_entry.setToolTip("Comma-separated language codes (e.g., en,es,fr) or 'all'.")
-            mn_layout.addWidget(QLabel("Subtitle Languages:"))
+            mn_layout.addWidget(QLabel("Subtitle Languages:")) # Label for entry
             mn_layout.addWidget(self.subtitle_langs_entry)
-
             self.embed_subs_checkbox = QCheckBox("Embed subtitles in video file")
             mn_layout.addWidget(self.embed_subs_checkbox)
-
             self.autosubs_checkbox = QCheckBox("Download automatic captions")
             mn_layout.addWidget(self.autosubs_checkbox)
-
-            mn_layout.addSpacing(10) # Separator (Network)
-
+            mn_layout.addSpacing(10)
             self.rate_limit_entry = QLineEdit()
             self.rate_limit_entry.setPlaceholderText("e.g., 500K, 1.5M (Optional)")
             self.rate_limit_entry.setToolTip("Limit download speed (e.g., 500K, 1.5M). Leave empty for no limit.")
-            mn_layout.addWidget(QLabel("Rate Limit (Optional):"))
+            mn_layout.addWidget(QLabel("Rate Limit (Optional):")) # Label for entry
             mn_layout.addWidget(self.rate_limit_entry)
-
-            # Cookie file handling
             cookie_layout = QHBoxLayout()
             self.cookie_browse_button = QPushButton("Use Cookie File")
             self.cookie_browse_button.setObjectName("cookieButton")
             self.cookie_browse_button.setToolTip("Select a cookies.txt file for accessing private content.")
             self.cookie_browse_button.clicked.connect(self._browse_cookie_file)
-            self.cookie_path_label = QLabel("<i>None selected</i>") # Display selected path
+            self.cookie_path_label = QLabel("<i>None selected</i>")
             self.cookie_path_label.setWordWrap(True)
-            self._cookie_file_path = None # Internal variable to store path
             cookie_layout.addWidget(self.cookie_browse_button)
-            cookie_layout.addWidget(self.cookie_path_label, 1) # Allow label to stretch
+            cookie_layout.addWidget(self.cookie_path_label, 1)
             mn_layout.addLayout(cookie_layout)
-
-
             mn_layout.addStretch(1)
             options_layout.addWidget(metadata_network_group)
 
@@ -604,22 +604,18 @@ class App(QWidget):
             youtube_group = QGroupBox("YouTube Options")
             yt_layout = QVBoxLayout(youtube_group)
             yt_layout.setSpacing(8)
-
             yt_layout.addWidget(QLabel("SponsorBlock:"))
             self.sponsorblock_combo = QComboBox()
             self.sponsorblock_combo.addItems(["None", "Skip Sponsor Segments", "Mark Sponsor Segments"])
             self.sponsorblock_combo.setToolTip("Automatically skip or mark sponsor sections in downloaded video (requires FFmpeg).")
             yt_layout.addWidget(self.sponsorblock_combo)
-
             yt_layout.addStretch(1)
-            options_layout.addWidget(youtube_group) # Add YouTube group
-
+            options_layout.addWidget(youtube_group)
 
             # Add the options layout (containing group boxes) to the main page layout
             main_page_layout.addLayout(options_layout)
 
-            # --- Status Container (Unchanged) ---
-            # ... (add status_container as before) ...
+            # --- Status Container ---
             self.status_container = QWidget()
             status_layout = QVBoxLayout(self.status_container); status_layout.setContentsMargins(0,0,0,0); status_layout.setSpacing(8); status_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
             status_layout.addWidget(self.progress_bar)
@@ -628,30 +624,28 @@ class App(QWidget):
             status_layout.addLayout(button_label_layout)
             main_page_layout.addWidget(self.status_container)
 
-
-            # --- Update Button Container (Unchanged) ---
-            # ... (add update_button_container as before) ...
+            # --- Update Button Container ---
             self.update_button_container = QWidget()
             self.update_button_layout = QVBoxLayout(self.update_button_container); self.update_button_layout.setContentsMargins(0, 10, 0, 0); self.update_button_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            main_page_layout.addWidget(self.update_button_container); self.update_button = None
+            main_page_layout.addWidget(self.update_button_container); self.update_button = None # Assuming button is added later
+            main_page_layout.addStretch(1) # Pushes everything up
 
-            main_page_layout.addStretch(1)
             self._home_initialized = True
-            self._update_quality_options_visibility() # Initial setup
+            self._initialize_home_page_controls_from_config() # Set initial states from config
+            self._update_quality_options_visibility() # Initial setup of visibility
 
         # --- Update states on showing the page (existing logic) ---
-        if hasattr(self, 'open_explorer_checkbox'):
-             current_config_state = self._config.get("open_folder_after_download", True)
-             self.open_explorer_checkbox.setChecked(bool(current_config_state))
-        self._update_quality_options_visibility()
-
+        # Refresh defaults from config each time page is shown (optional, depends on desired behavior)
+        # self._initialize_home_page_controls_from_config()
+        self._update_quality_options_visibility() # Ensure correct visibility
         self.update_download_controls_visibility(is_downloading=(self.download_thread is not None and self.download_thread.isRunning()))
         self.pages_layout.setCurrentWidget(self.home_page_widget)
-        if hasattr(self, 'home_button'): self.home_button.setChecked(True)
+        if hasattr(self, 'home_button'): # Assuming home_button exists for navigation
+            self.home_button.setChecked(True)
 
     @Slot()
     def _update_quality_options_visibility(self):
-        """ Shows/hides video/audio quality options based on selected file type. """
+        """ Shows/hides video/audio quality & codec options based on selected file type. """
         if not self._home_initialized:
             return # Don't run if widgets aren't created yet
 
@@ -659,19 +653,36 @@ class App(QWidget):
         format_details = filetypes.get(selected_format_key, {})
         is_audio_only = format_details.get("audio", False)
 
-        # Video quality only makes sense for non-audio-only formats
+        # Video quality & codec only make sense for non-audio-only formats
         self.video_quality_label.setVisible(not is_audio_only)
         self.video_quality_combo.setVisible(not is_audio_only)
+        self.video_codec_label.setVisible(not is_audio_only)
+        self.video_codec_combo.setVisible(not is_audio_only)
 
-        # Audio quality primarily applies to audio-only formats (for bitrate selection)
-        # Or could be shown always, but we'll tie it to audio-only for now
+        # Audio quality & codec primarily apply to audio-only formats (for bitrate/codec selection)
         self.audio_quality_label.setVisible(is_audio_only)
         self.audio_quality_combo.setVisible(is_audio_only)
+        self.audio_codec_label.setVisible(is_audio_only)
+        self.audio_codec_combo.setVisible(is_audio_only)
 
-        # Subtitles only make sense for video formats
-        self.subtitles_checkbox.setVisible(not is_audio_only)
-        # Thumbnails could apply to both, but often associated with video
-        self.thumbnail_checkbox.setVisible(not is_audio_only) # Keep visible only for video
+        # Subtitles & Thumbnails only make sense for video formats
+        if hasattr(self, 'subtitles_checkbox'):
+            self.subtitles_checkbox.setVisible(not is_audio_only)
+        if hasattr(self, 'thumbnail_checkbox'):
+            self.thumbnail_checkbox.setVisible(not is_audio_only)
+        # Also hide subtitle related options if the master switch is hidden
+        if hasattr(self, 'subtitle_langs_entry') and hasattr(self, 'embed_subs_checkbox') and hasattr(self, 'autosubs_checkbox'):
+            # Find the label associated with subtitle_langs_entry assuming it's the widget before it in the layout
+            mn_layout = self.metadata_network_group.layout() # Get the layout of the parent group box
+            idx = mn_layout.indexOf(self.subtitle_langs_entry)
+            if idx > 0:
+                item = mn_layout.itemAt(idx - 1)
+                if item and item.widget() and isinstance(item.widget(), QLabel):
+                    item.widget().setVisible(not is_audio_only) # Show/hide the label
+
+            self.subtitle_langs_entry.setVisible(not is_audio_only)
+            self.embed_subs_checkbox.setVisible(not is_audio_only)
+            self.autosubs_checkbox.setVisible(not is_audio_only)
 
     def show_settings(self):
         """ Creates (if needed) and shows the Settings page content. """
@@ -1136,15 +1147,17 @@ class App(QWidget):
     @Slot()
     def start_downloading(self):
         """ Validates input and initiates the download process with ALL selected options. """
-        # Check if essential widgets exist (expand this list as needed)
+        # Check if essential widgets exist
         essential_widgets = [
-            'profile_entry', 'dropdown_menu', 'video_quality_combo', 'audio_quality_combo',
+            'profile_entry', 'dropdown_menu',
+            'video_quality_combo', 'video_codec_combo', # Added video codec
+            'audio_quality_combo', 'audio_codec_combo', # Added audio codec
             'playlist_range_entry', 'playlist_reverse_checkbox', 'filename_template_entry',
             'keep_original_checkbox', 'open_explorer_checkbox', 'embed_metadata_checkbox',
             'embed_chapters_checkbox', 'thumbnail_checkbox', 'write_infojson_checkbox',
             'subtitles_checkbox', 'subtitle_langs_entry', 'embed_subs_checkbox',
             'autosubs_checkbox', 'rate_limit_entry', 'sponsorblock_combo',
-            'cookie_browse_button' # Check button exists, path is handled separately
+            'cookie_browse_button', 'cookie_path_label' # Added label for completeness
         ]
         if not self._home_initialized or not all(hasattr(self, w) for w in essential_widgets):
             self.show_custom_messagebox("Error", "UI elements are not ready.", QMessageBox.Icon.Warning); return
@@ -1156,7 +1169,9 @@ class App(QWidget):
 
         # --- Get Options (Existing & New) ---
         video_quality = self.video_quality_combo.currentText()
+        video_codec = self.video_codec_combo.currentText() # Get video codec
         audio_quality = self.audio_quality_combo.currentText()
+        audio_codec = self.audio_codec_combo.currentText() # Get audio codec
         embed_thumbnail = self.thumbnail_checkbox.isChecked() # Keep this one
         # Playlist
         playlist_range = self.playlist_range_entry.text().strip()
@@ -1175,23 +1190,24 @@ class App(QWidget):
         autosubs = self.autosubs_checkbox.isChecked()
         # Network
         rate_limit = self.rate_limit_entry.text().strip() or None
-        cookie_file = self._cookie_file_path # Get path stored by the browser slot
+        cookie_file = getattr(self, '_cookie_file_path', None) # Get path stored by the browser slot, default None
         # YouTube Specific
         sponsorblock_choice = self.sponsorblock_combo.currentText()
 
 
         # --- Basic Validation (existing) ---
         if not url: self.show_custom_messagebox("Error", "Please enter URL.", QMessageBox.Icon.Warning); return
-        # ... (rest of URL and thread running validation) ...
         parsed_url = urlparse(url)
         if not parsed_url.scheme or not parsed_url.netloc:
-             self.show_custom_messagebox("Error", "Invalid URL format.", QMessageBox.Icon.Warning); return
+            self.show_custom_messagebox("Error", "Invalid URL format.", QMessageBox.Icon.Warning); return
         if self.download_thread and self.download_thread.isRunning():
-             self.show_custom_messagebox("Info", "Download already in progress.", QMessageBox.Icon.Information); return
+            self.show_custom_messagebox("Info", "Download already in progress.", QMessageBox.Icon.Information); return
 
 
         # --- Setup Thread & Worker ---
-        if hasattr(self, 'console_output'): self.console_output.clear()
+        if self._config.get("clear_console_before_download", DEFAULT_SETTINGS.get("clear_console_before_download", False)) and hasattr(self, 'console_output'):
+            self.console_output.clear()
+
         self.update_download_controls_visibility(is_downloading=True)
 
         self.download_thread = QThread(self)
@@ -1203,6 +1219,10 @@ class App(QWidget):
             # Basic Quality/Format
             video_quality=video_quality,
             audio_quality=audio_quality,
+            # *** ADDED: Pass codecs to worker ***
+            video_codec=video_codec if video_codec != "Auto" else None, # Pass codec or None if Auto
+            audio_codec=audio_codec if audio_codec != "Auto" else None, # Pass codec or None if Auto
+            # *** END ADDED ***
             embed_thumbnail=embed_thumbnail,
             # Playlist
             playlist_range=playlist_range,
@@ -1228,7 +1248,6 @@ class App(QWidget):
         self.download_worker.moveToThread(self.download_thread)
 
         # --- Connect Signals & Start (existing logic) ---
-        # ... (connect signals, start thread) ...
         self.download_worker.download_complete.connect(self.on_download_complete)
         self.download_worker.progress_update.connect(self.update_console_output)
         self.download_worker.error.connect(self.on_download_error)
@@ -1241,7 +1260,6 @@ class App(QWidget):
         self.download_thread.finished.connect(self._cleanup_download_thread_references)
 
         self.download_thread.start()
-
 
     @Slot()
     def _browse_cookie_file(self):
@@ -1548,24 +1566,51 @@ class App(QWidget):
         """Updates home page controls with the default settings from the config."""
         if not self._home_initialized:
             return
-        # Update default checkbox states and entry fields
-        self.open_explorer_checkbox.setChecked(bool(self._config.get("open_folder_after_download", True)))
-        self.keep_original_checkbox.setChecked(bool(self._config.get("default_keep_original", False)))
-        self.embed_metadata_checkbox.setChecked(bool(self._config.get("default_embed_metadata", False)))
-        self.embed_chapters_checkbox.setChecked(bool(self._config.get("default_embed_chapters", False)))
-        self.thumbnail_checkbox.setChecked(bool(self._config.get("default_embed_thumbnail", False)))
-        self.write_infojson_checkbox.setChecked(bool(self._config.get("default_write_infojson", False)))
-        self.subtitles_checkbox.setChecked(bool(self._config.get("default_download_subtitles", False)))
-        self.embed_subs_checkbox.setChecked(bool(self._config.get("default_embed_subs", False)))
-        self.autosubs_checkbox.setChecked(bool(self._config.get("default_autosubs", False)))
-        self.subtitle_langs_entry.setText(self._config.get("default_subtitle_langs", "en"))
-        self.rate_limit_entry.setText(self._config.get("default_rate_limit", ""))
-        current_sb = self._config.get("default_sponsorblock", "None")
+    
+        # Check if essential widgets exist before trying to set them
+        widget_attributes = [
+            'open_explorer_checkbox', 'keep_original_checkbox', 'embed_metadata_checkbox',
+            'embed_chapters_checkbox', 'thumbnail_checkbox', 'write_infojson_checkbox',
+            'subtitles_checkbox', 'embed_subs_checkbox', 'autosubs_checkbox',
+            'subtitle_langs_entry', 'rate_limit_entry', 'sponsorblock_combo',
+            'video_codec_combo', 'audio_codec_combo' # Check for new combos too
+        ]
+        if not all(hasattr(self, attr) for attr in widget_attributes):
+            print("Warning: Not all home page controls are initialized. Skipping setting defaults.")
+            return
+    
+        # --- Update controls based on self._config ---
+        # Use DEFAULT_SETTINGS as fallback for each individual setting
+        self.open_explorer_checkbox.setChecked(bool(self._config.get("open_folder_after_download", DEFAULT_SETTINGS.get("open_folder_after_download", True))))
+        self.keep_original_checkbox.setChecked(bool(self._config.get("default_keep_original", DEFAULT_SETTINGS.get("default_keep_original", False))))
+        self.embed_metadata_checkbox.setChecked(bool(self._config.get("default_embed_metadata", DEFAULT_SETTINGS.get("default_embed_metadata", False))))
+        self.embed_chapters_checkbox.setChecked(bool(self._config.get("default_embed_chapters", DEFAULT_SETTINGS.get("default_embed_chapters", False))))
+        self.thumbnail_checkbox.setChecked(bool(self._config.get("default_embed_thumbnail", DEFAULT_SETTINGS.get("default_embed_thumbnail", False))))
+        self.write_infojson_checkbox.setChecked(bool(self._config.get("default_write_infojson", DEFAULT_SETTINGS.get("default_write_infojson", False))))
+        self.subtitles_checkbox.setChecked(bool(self._config.get("default_download_subtitles", DEFAULT_SETTINGS.get("default_download_subtitles", False))))
+        self.embed_subs_checkbox.setChecked(bool(self._config.get("default_embed_subs", DEFAULT_SETTINGS.get("default_embed_subs", False))))
+        self.autosubs_checkbox.setChecked(bool(self._config.get("default_autosubs", DEFAULT_SETTINGS.get("default_autosubs", False))))
+        self.subtitle_langs_entry.setText(self._config.get("default_subtitle_langs", DEFAULT_SETTINGS.get("default_subtitle_langs", "en")))
+        self.rate_limit_entry.setText(self._config.get("default_rate_limit", DEFAULT_SETTINGS.get("default_rate_limit", "")))
+    
+        # SponsorBlock Combo
+        current_sb = self._config.get("default_sponsorblock", DEFAULT_SETTINGS.get("default_sponsorblock", "None"))
         sb_index = self.sponsorblock_combo.findText(current_sb, Qt.MatchFlag.MatchFixedString | Qt.MatchFlag.MatchCaseSensitive)
         if sb_index >= 0:
             self.sponsorblock_combo.setCurrentIndex(sb_index)
-
-
+        else:
+            self.sponsorblock_combo.setCurrentIndex(0) # Default to "None" if config value is invalid
+    
+        # Codec Combos (Default to "Auto" if no specific default is set in config)
+        default_vcodec = self._config.get("default_video_codec", "Auto")
+        vcodec_index = self.video_codec_combo.findText(default_vcodec, Qt.MatchFlag.MatchFixedString | Qt.MatchFlag.MatchCaseSensitive)
+        self.video_codec_combo.setCurrentIndex(vcodec_index if vcodec_index >= 0 else 0) # Default to "Auto"
+    
+        default_acodec = self._config.get("default_audio_codec", "Auto")
+        acodec_index = self.audio_codec_combo.findText(default_acodec, Qt.MatchFlag.MatchFixedString | Qt.MatchFlag.MatchCaseSensitive)
+        self.audio_codec_combo.setCurrentIndex(acodec_index if acodec_index >= 0 else 0) # Default to "Auto"
+    
+    
     # --- Update Check Actions ---
 
     @Slot()

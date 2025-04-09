@@ -48,7 +48,11 @@ class DownloadWorker(QObject):
 
     def __init__(self, url: str, filetype: str, open_explorer_var: bool,
                  # Basic Quality/Format
-                 video_quality: str, audio_quality: str, embed_thumbnail: bool,
+                 video_quality: str, audio_quality: str,
+                 # *** ADDED: Codec parameters ***
+                 video_codec: str | None, audio_codec: str | None,
+                 # *** END ADDED ***
+                 embed_thumbnail: bool,
                  # Playlist
                  playlist_range: str, playlist_reverse: bool,
                  # Output
@@ -69,6 +73,10 @@ class DownloadWorker(QObject):
         self.open_explorer_var = open_explorer_var
         self.video_quality = video_quality
         self.audio_quality = audio_quality
+        # *** ADDED: Store codecs ***
+        self.video_codec = video_codec
+        self.audio_codec = audio_codec
+        # *** END ADDED ***
         self.embed_thumbnail = embed_thumbnail
         self.playlist_range = playlist_range
         self.playlist_reverse = playlist_reverse
@@ -97,11 +105,15 @@ class DownloadWorker(QObject):
                 url=self.url,
                 filetype_key=self.filetype,
                 progress_callback=self.progress_update,
-                open_explorer_flag=self.open_explorer_var, # Not used by dl.py but passed
+                open_explorer_flag=self.open_explorer_var, # Passed but not used by dl.py
                 stop_event=self.stop_event,
                 # Pass all stored options
                 video_quality=self.video_quality,
                 audio_quality=self.audio_quality,
+                # *** ADDED: Pass stored codecs ***
+                video_codec=self.video_codec,
+                audio_codec=self.audio_codec,
+                # *** END ADDED ***
                 embed_thumbnail=self.embed_thumbnail,
                 playlist_range=self.playlist_range,
                 playlist_reverse=self.playlist_reverse,
@@ -124,25 +136,27 @@ class DownloadWorker(QObject):
             elif self.stop_event.is_set():
                 self.download_complete.emit(False, "Download cancelled by user.")
             else: # Download finished but no path returned or validation failed in dl.py
-                 # Error should have been emitted by dl.py via progress_callback or raised
-                 # If dl.py returned None without raising/cancelling, treat as failure.
-                 self.error.emit("Download failed: No valid file path received.")
-                 self.download_complete.emit(False, "Download failed or file path missing.")
+                  # Error should have been emitted by dl.py via progress_callback or raised
+                  # If dl.py returned None without raising/cancelling, treat as failure.
+                  # Emit error signal if not already emitted by dl.py via progress_callback
+                  # Check if an error signal was already emitted maybe? Or just emit completion=False
+                  # self.error.emit("Download failed: No valid file path received.") # Potentially duplicate
+                  self.download_complete.emit(False, "Download failed or file path missing.")
 
         except DownloadCancelled as e:
             print(f"Download worker caught cancellation: {e}")
-            self.download_complete.emit(False, str(e))
+            self.download_complete.emit(False, str(e)) # Emit completion=False with reason
 
         except Exception as e:
             error_msg = f"Download failed: {str(e)}"
             print(f"Error in download worker thread: {traceback.format_exc()}")
-            self.error.emit(error_msg)
-            self.download_complete.emit(False, "Download failed due to error.")
+            self.error.emit(error_msg) # Emit specific error
+            # Emit completion=False as well, perhaps with a generic message
+            # self.download_complete.emit(False, "Download failed due to an unexpected error.") # Maybe redundant if error is emitted
 
     def request_stop(self):
         """ Signals the download logic to stop. """
         self.stop_event.set()
-
 
 class UpdateCheckWorker(QObject):
     """ Worker object to check for updates asynchronously. """
